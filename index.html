@@ -37,10 +37,11 @@
     display:flex; flex-direction:column;
   }
   header.topbar{
-    padding:20px 20px 10px; display:flex; align-items:center; justify-content:space-between;
+    padding:calc(20px + env(safe-area-inset-top)) 20px 10px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:8px; row-gap:10px;
   }
   header.topbar h1{ font-size:20px; margin:0; }
-  header.topbar .right{ display:flex; align-items:center; gap:8px; }
+  header.topbar .right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   header.topbar .badge{
     background:var(--card); border-radius:20px; padding:6px 12px; font-size:13px; color:var(--blue-dark); font-weight:600;
     display:flex; align-items:center; gap:6px;
@@ -112,7 +113,7 @@
   .story-text{ font-size:17px; line-height:1.8; }
   .story-text .word{
     text-decoration:underline; text-decoration-color:var(--blue); text-decoration-thickness:2px;
-    color:var(--blue-dark); font-weight:600; cursor:pointer; position:relative;
+    color:var(--blue-dark); font-weight:800; cursor:pointer; position:relative;
   }
   .story-text .word.revealed{ background:#fff4d6; border-radius:4px; padding:0 3px; }
   .tooltip{
@@ -263,7 +264,7 @@
 
       <div class="card" id="own-example-card" style="display:none">
         <label class="field-label">Escribe tu propio ejemplo (en inglés)</label>
-        <textarea id="input-own-example" placeholder="Ej: I understand why she was upset."></textarea>
+        <textarea id="input-own-example" placeholder="Escribe aquí..."></textarea>
       </div>
 
       <button class="btn" id="btn-guardar" style="display:none" onclick="saveWord()">Guardar</button>
@@ -571,26 +572,41 @@ function knownWords(){
   return words.filter(w => w.examples && w.examples.length > 0);
 }
 
-function renderHistoria(){
+async function renderHistoria(){
   const el = document.getElementById('historia-content');
   const wds = knownWords();
   if(wds.length < 3){
     el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una historia.</div>';
     return;
   }
-  const chosen = [...wds].sort(()=>0.5-Math.random()).slice(0, Math.min(6, wds.length));
-  const sentences = chosen.map(w=>{
-    const sentence = w.examples[0];
-    const marked = sentence.replace(new RegExp('\\\\b'+w.en+'\\\\b','i'), m=>
-      `<span class="word" onclick="this.classList.toggle('revealed')">${m}<span class="tooltip">${w.es} — "${sentence}"</span></span>`);
-    return marked;
-  });
-  el.innerHTML = `
-    <p class="story-text">${sentences.join(' ')}</p>
-    <p class="note">Toca una palabra subrayada si no recuerdas su significado.</p>
-    <button class="btn secondary small" onclick="renderHistoria()">🔄 Nueva historia</button>
-  `;
-  logActivity();
+  el.innerHTML = '<div class="empty-hint">✍️ Generando tu historia…</div>';
+
+  try{
+    const { data, error } = await sb.functions.invoke('generate-story', {
+      body: { words: wds.map(w => ({ en: w.en, es: w.es })) }
+    });
+    if(error || !data || data.error || !data.story) throw new Error((data && data.error) || (error && error.message) || 'error');
+
+    const html = data.story.replace(/\*\*(.+?)\*\*/g, (match, word) => {
+      const lower = word.toLowerCase();
+      let lookup = wds.find(w => w.en.toLowerCase() === lower);
+      if(!lookup) lookup = wds.find(w => lower.startsWith(w.en.toLowerCase()) || w.en.toLowerCase().startsWith(lower));
+      const meaning = lookup ? lookup.es : '';
+      return `<span class="word" onclick="this.classList.toggle('revealed')">${word}<span class="tooltip">${meaning}</span></span>`;
+    });
+
+    el.innerHTML = `
+      <p class="story-text">${html}</p>
+      <p class="note">Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.</p>
+      <button class="btn secondary small" onclick="renderHistoria()">🔄 Nueva historia</button>
+    `;
+    logActivity();
+  }catch(e){
+    el.innerHTML = `
+      <div class="empty-hint">No se pudo generar la historia esta vez.</div>
+      <button class="btn secondary small" onclick="renderHistoria()">Reintentar</button>
+    `;
+  }
 }
 
 let quizState = null;
@@ -614,7 +630,7 @@ function paintOraciones(){
   const el = document.getElementById('oraciones-content');
   const wds = knownWords();
   el.innerHTML = quizState.questions.map((q,i)=>{
-    const blankSentence = q.sentence.replace(new RegExp('\\\\b'+q.word+'\\\\b','i'), '<span class="blank">_____</span>');
+    const blankSentence = q.sentence.replace(new RegExp('\\b'+q.word+'\\b','i'), '<span class="blank">_____</span>');
     const opts = [...new Set([q.word, ...wds.map(w=>w.en)])].sort(()=>0.5-Math.random()).slice(0,4);
     if(!opts.includes(q.word)) opts[0]=q.word;
     return `
