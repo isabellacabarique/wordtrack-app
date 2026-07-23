@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WordTrack — Prototipo</title>
+
+<!-- PWA: permite "Agregar a pantalla de inicio" -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1ea1e8">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WordTrack">
+
+<style>
+  :root{
+    --bg:#eef4fb;
+    --card:#ffffff;
+    --blue:#1ea1e8;
+    --blue-dark:#0b7fc4;
+    --green:#3aa76d;
+    --text:#22313f;
+    --muted:#8a9bab;
+    --border:#e3ecf5;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+  .phone{
+    max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg);
+    display:flex; flex-direction:column;
+  }
+  header.topbar{
+    padding:20px 20px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  header.topbar h1{ font-size:20px; margin:0; }
+  header.topbar .right{ display:flex; align-items:center; gap:8px; }
+  header.topbar .badge{
+    background:var(--card); border-radius:20px; padding:6px 12px; font-size:13px; color:var(--blue-dark); font-weight:600;
+    display:flex; align-items:center; gap:6px;
+  }
+  header.topbar .user-chip{
+    background:var(--card); border-radius:20px; padding:6px 10px; font-size:12px; color:var(--muted);
+    display:flex; align-items:center; gap:6px; cursor:pointer; border:none; font-family:inherit;
+  }
+  main{ flex:1; padding:0 20px 90px; }
+  .card{
+    background:var(--card); border-radius:var(--radius); padding:18px; margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(20,40,70,0.06);
+  }
+  .stats-row{ display:flex; gap:12px; }
+  .stat{
+    flex:1; background:var(--card); border-radius:var(--radius); padding:16px; text-align:center;
+    box-shadow:0 1px 3px rgba(20,40,70,0.06);
+  }
+  .stat .num{ font-size:28px; font-weight:700; color:var(--blue-dark); }
+  .stat .label{ font-size:12px; color:var(--muted); margin-top:4px; }
+  h2.section-title{ font-size:15px; color:var(--muted); margin:24px 0 10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  label.field-label{ font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
+  input[type=text], input[type=email], input[type=password], textarea{
+    width:100%; border:none; border-bottom:2px solid var(--border); font-size:18px; padding:8px 0;
+    background:transparent; color:var(--text); outline:none; font-family:inherit;
+  }
+  input:focus, textarea:focus{ border-bottom-color:var(--blue); }
+  textarea{ resize:vertical; min-height:44px; }
+  .translation{ font-size:18px; color:var(--blue-dark); font-weight:600; }
+  .example-chip{
+    background:#f1faf6; color:var(--green); border:1px solid #d7f0e3; border-radius:12px;
+    padding:10px 14px; font-size:14px; margin-bottom:8px;
+  }
+  .btn{
+    display:block; width:100%; text-align:center; background:var(--blue); color:#fff; border:none;
+    border-radius:30px; padding:15px; font-size:16px; font-weight:700; cursor:pointer; letter-spacing:.02em;
+  }
+  .btn:disabled{ background:#b9d9ee; cursor:not-allowed; }
+  .btn.secondary{ background:var(--card); color:var(--blue-dark); border:2px solid var(--blue); }
+  .btn.small{ padding:8px 14px; font-size:13px; width:auto; display:inline-block; }
+  nav.tabbar{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    background:var(--card); display:flex; border-top:1px solid var(--border); padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  nav.tabbar button{
+    flex:1; background:none; border:none; padding:8px 2px; font-size:11px; color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; font-family:inherit;
+  }
+  nav.tabbar button .icon{ font-size:20px; }
+  nav.tabbar button.active{ color:var(--blue-dark); font-weight:700; }
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+  .word-row{
+    display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);
+  }
+  .word-row:last-child{ border-bottom:none; }
+  .word-row .en{ font-weight:600; }
+  .word-row .es{ color:var(--muted); font-size:13px; }
+  .pill{ font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; }
+  .pill.nueva{ background:#fdeee0; color:#c97324; }
+  .pill.practicando{ background:#e6f0fd; color:#2f6fd9; }
+  .pill.dominada{ background:#e2f6ea; color:#2f9c5c; }
+  .subtabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .subtabs button{
+    flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
+    font-family:inherit; font-weight:600; font-size:13px; color:var(--muted); cursor:pointer;
+  }
+  .subtabs button.active{ border-color:var(--blue); color:var(--blue-dark); background:#eaf6ff; }
+  .story-text{ font-size:17px; line-height:1.8; }
+  .story-text .word{
+    text-decoration:underline; text-decoration-color:var(--blue); text-decoration-thickness:2px;
+    color:var(--blue-dark); font-weight:600; cursor:pointer; position:relative;
+  }
+  .story-text .word.revealed{ background:#fff4d6; border-radius:4px; padding:0 3px; }
+  .tooltip{
+    display:none; position:absolute; bottom:130%; left:0; background:var(--text); color:#fff;
+    padding:8px 12px; border-radius:10px; font-size:13px; width:220px; z-index:5; line-height:1.4;
+  }
+  .story-text .word.revealed .tooltip{ display:block; }
+  .fill-q{ margin-bottom:22px; }
+  .fill-sentence{ font-size:16px; margin-bottom:10px; }
+  .fill-sentence .blank{ border-bottom:2px solid var(--blue); padding:0 4px; font-weight:700; color:var(--blue-dark); }
+  .options{ display:flex; flex-wrap:wrap; gap:8px; }
+  .option-btn{
+    padding:8px 14px; border-radius:20px; border:2px solid var(--border); background:var(--card);
+    font-family:inherit; font-size:13px; cursor:pointer; color:var(--text);
+  }
+  .option-btn.correct{ border-color:var(--green); background:#e2f6ea; color:#2f9c5c; }
+  .option-btn.incorrect{ border-color:#e05252; background:#fdeaea; color:#c23a3a; }
+  .option-btn:disabled{ cursor:default; }
+  .empty-hint{ color:var(--muted); font-size:14px; text-align:center; padding:30px 10px; }
+  .note{ font-size:12px; color:var(--muted); margin-top:8px; }
+  .score-banner{ text-align:center; padding:20px; }
+  .score-banner .big{ font-size:40px; font-weight:700; color:var(--blue-dark); }
+
+  /* Auth */
+  #auth-screen{ min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:24px; }
+  .auth-logo{ text-align:center; font-size:26px; font-weight:700; margin-bottom:6px; }
+  .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .auth-tabs{ display:flex; gap:8px; margin-bottom:20px; }
+  .auth-tabs button{
+    flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
+    font-family:inherit; font-weight:600; font-size:14px; color:var(--muted); cursor:pointer;
+  }
+  .auth-tabs button.active{ border-color:var(--blue); color:var(--blue-dark); background:#eaf6ff; }
+  .auth-form{ display:none; }
+  .auth-form.active{ display:block; }
+  .auth-error{ color:#c23a3a; font-size:13px; margin:10px 0 0; min-height:16px; }
+  .field-group{ margin-bottom:16px; }
+  .demo-note{ text-align:center; font-size:11px; color:var(--muted); margin-top:18px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- ===================== PANTALLA DE AUTENTICACIÓN (simulada) ===================== -->
+<div id="auth-screen">
+  <div class="auth-logo">👋 WordTrack</div>
+  <div class="auth-sub">Guarda tu vocabulario y practica cuando quieras</div>
+
+  <div class="auth-tabs">
+    <button class="active" id="tab-login" onclick="switchAuthTab('login')">Iniciar sesión</button>
+    <button id="tab-signup" onclick="switchAuthTab('signup')">Crear cuenta</button>
+  </div>
+
+  <div class="card auth-form active" id="form-login">
+    <div class="field-group">
+      <label class="field-label">Correo</label>
+      <input type="email" id="login-email" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••">
+    </div>
+    <button class="btn" onclick="doLogin()">Entrar</button>
+    <div class="auth-error" id="login-error"></div>
+  </div>
+
+  <div class="card auth-form" id="form-signup">
+    <div class="field-group">
+      <label class="field-label">Nombre</label>
+      <input type="text" id="signup-name" placeholder="Tu nombre">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Correo</label>
+      <input type="email" id="signup-email" placeholder="tucorreo@ejemplo.com">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Contraseña</label>
+      <input type="password" id="signup-password" placeholder="Mínimo 4 caracteres">
+    </div>
+    <button class="btn" onclick="doSignup()">Crear cuenta</button>
+    <div class="auth-error" id="signup-error"></div>
+  </div>
+
+  <p class="demo-note">Demo: las cuentas se guardan solo en este navegador, para simular el flujo. En la versión real esto se manejaría con un servicio de autenticación y una base de datos en la nube.</p>
+</div>
+
+<!-- ===================== APP PRINCIPAL ===================== -->
+<div class="phone" id="app-content" style="display:none">
+
+  <header class="topbar">
+    <h1>👋 WordTrack</h1>
+    <div class="right">
+      <div class="badge">🔥 <span id="streak-badge">0</span> días</div>
+      <button class="user-chip" id="user-chip" onclick="doLogout()" title="Cerrar sesión">👤 <span id="user-name-label"></span> · Salir</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- INICIO -->
+    <section class="screen active" id="screen-inicio">
+      <div class="card" id="install-banner" style="display:none; background:#eaf6ff; border:2px solid var(--blue);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="font-size:26px;">📲</div>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:14px;">Instala WordTrack en tu celular</div>
+            <div style="font-size:12px; color:var(--muted);" id="install-banner-text">Úsala como una app, con ícono en tu pantalla de inicio.</div>
+          </div>
+        </div>
+        <button class="btn small" style="margin-top:12px;" id="install-btn" onclick="handleInstallClick()">Instalar</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="num" id="stat-streak">0</div>
+          <div class="label">Racha actual</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="stat-30d">0</div>
+          <div class="label">Palabras (30 días)</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="stat-total">0</div>
+          <div class="label">Total guardadas</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Últimas palabras agregadas</h2>
+      <div class="card" id="recent-list">
+        <div class="empty-hint">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>
+      </div>
+
+      <button class="btn" style="margin-top:6px" onclick="goTo('agregar')">+ Agregar palabra nueva</button>
+    </section>
+
+    <!-- AGREGAR -->
+    <section class="screen" id="screen-agregar">
+      <div class="card">
+        <label class="field-label">inglés</label>
+        <input type="text" id="input-en" placeholder="Escribe una palabra..." oninput="onWordInput()">
+      </div>
+
+      <div class="card" id="translation-card" style="display:none">
+        <label class="field-label">español</label>
+        <div class="translation" id="translation-text">—</div>
+        <h2 class="section-title" style="margin-top:18px">Ejemplos de uso</h2>
+        <div id="examples-list"></div>
+      </div>
+
+      <div class="card" id="own-example-card" style="display:none">
+        <label class="field-label">Escribe tu propio ejemplo (en inglés)</label>
+        <textarea id="input-own-example" placeholder="Ej: I understand why she was upset."></textarea>
+      </div>
+
+      <button class="btn" id="btn-guardar" style="display:none" onclick="saveWord()">Guardar</button>
+      <p class="note" id="unknown-note" style="display:none">Esta palabra no está en el banco de demo. En la versión real, la traducción y los ejemplos se generarían automáticamente con IA — por ahora puedes escribirlos tú misma abajo.</p>
+    </section>
+
+    <!-- MI VOCABULARIO -->
+    <section class="screen" id="screen-vocab">
+      <h2 class="section-title">Mi vocabulario</h2>
+      <div class="card" id="vocab-list">
+        <div class="empty-hint">Aún no hay palabras guardadas.</div>
+      </div>
+    </section>
+
+    <!-- PRACTICAR -->
+    <section class="screen" id="screen-practicar">
+      <div class="subtabs">
+        <button class="active" id="subtab-historia" onclick="switchGame('historia')">📖 Historia</button>
+        <button id="subtab-oraciones" onclick="switchGame('oraciones')">✏️ Completar</button>
+      </div>
+
+      <div id="game-historia">
+        <div class="card" id="historia-content">
+          <div class="empty-hint">Guarda al menos 3 palabras del banco de demo para generar una historia.</div>
+        </div>
+      </div>
+
+      <div id="game-oraciones" style="display:none">
+        <div class="card" id="oraciones-content">
+          <div class="empty-hint">Guarda al menos 4 palabras del banco de demo para jugar.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="active" data-tab="inicio" onclick="goTo('inicio')"><span class="icon">🏠</span>Inicio</button>
+    <button data-tab="agregar" onclick="goTo('agregar')"><span class="icon">➕</span>Agregar</button>
+    <button data-tab="vocab" onclick="goTo('vocab')"><span class="icon">📚</span>Vocabulario</button>
+    <button data-tab="practicar" onclick="goTo('practicar')"><span class="icon">🎮</span>Practicar</button>
+  </nav>
+
+  <!-- Instrucciones de instalación para iPhone (Safari no tiene instalación automática) -->
+  <div id="ios-install-modal" style="display:none; position:fixed; inset:0; background:rgba(20,40,70,0.45); z-index:20; align-items:flex-end; justify-content:center;">
+    <div class="card" style="width:100%; max-width:480px; border-radius:24px 24px 0 0; margin:0;">
+      <div style="font-weight:700; font-size:16px; margin-bottom:10px;">Instalar en iPhone</div>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;">1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;">2. Baja y elige <strong>"Agregar a inicio"</strong>.</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;">3. Listo — te quedará el ícono de WordTrack en tu pantalla.</p>
+      <button class="btn secondary" onclick="document.getElementById('ios-install-modal').style.display='none'">Entendido</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Banco de palabras simulando traducción/ejemplos generados por IA ---------- */
+const DICTIONARY = {
+  "understand": { es:"entender / comprender", examples:[
+    "I understand the rules of the game now.",
+    "Can you explain it again? I don't understand."]},
+  "achieve": { es:"lograr", examples:[
+    "She worked hard to achieve her goals.",
+    "We achieved more than we expected this year."]},
+  "patient": { es:"paciente", examples:[
+    "Be patient, the bus will arrive soon.",
+    "The doctor was very patient with her questions."]},
+  "improve": { es:"mejorar", examples:[
+    "He wants to improve his English speaking skills.",
+    "Practice every day and you will improve quickly."]},
+  "confident": { es:"seguro / con confianza", examples:[
+    "She felt confident during the job interview.",
+    "Practicing more will make you more confident."]},
+  "struggle": { es:"luchar / tener dificultad", examples:[
+    "Many students struggle with pronunciation at first.",
+    "I struggled to finish the exam on time."]},
+  "opportunity": { es:"oportunidad", examples:[
+    "This job is a great opportunity for you.",
+    "Don't miss the opportunity to practice English abroad."]},
+  "schedule": { es:"horario / agenda", examples:[
+    "My schedule is full this week.",
+    "Can we schedule a meeting for tomorrow?"]},
+  "deadline": { es:"fecha límite", examples:[
+    "The deadline for the project is Friday.",
+    "We need to finish before the deadline."]},
+  "habit": { es:"hábito / costumbre", examples:[
+    "Reading every night became a habit.",
+    "It's hard to break a bad habit."]},
+  "encourage": { es:"animar / alentar", examples:[
+    "Her teacher encouraged her to keep practicing.",
+    "I want to encourage you to speak more in class."]},
+  "mistake": { es:"error", examples:[
+    "It's okay to make mistakes while learning.",
+    "He noticed his mistake and corrected it."]},
+  "explain": { es:"explicar", examples:[
+    "Could you explain that word again?",
+    "The teacher explained the grammar rule clearly."]},
+  "remember": { es:"recordar", examples:[
+    "I always remember new words better with examples.",
+    "Do you remember what this word means?"]},
+  "forget": { es:"olvidar", examples:[
+    "Don't forget to review your words today.",
+    "I forgot the meaning of this word."]},
+  "practice": { es:"practicar", examples:[
+    "You should practice speaking every day.",
+    "Practice makes perfect."]},
+  "progress": { es:"progreso / avanzar", examples:[
+    "You are making great progress this month.",
+    "Keep track of your progress every week."]}
+};
+
+/* ---------- "Backend" simulado de usuarios (localStorage) ---------- */
+function loadUsers(){ return JSON.parse(localStorage.getItem('wordtrack_users') || '{}'); }
+function saveUsers(users){ localStorage.setItem('wordtrack_users', JSON.stringify(users)); }
+
+let currentUserEmail = null;
+let state = { words: [], activityDates: [] };
+
+function switchAuthTab(which){
+  document.getElementById('tab-login').classList.toggle('active', which==='login');
+  document.getElementById('tab-signup').classList.toggle('active', which==='signup');
+  document.getElementById('form-login').classList.toggle('active', which==='login');
+  document.getElementById('form-signup').classList.toggle('active', which==='signup');
+}
+
+function doSignup(){
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
+  const password = document.getElementById('signup-password').value;
+  const errEl = document.getElementById('signup-error');
+  errEl.textContent = '';
+
+  if(!name || !email || !password){ errEl.textContent = 'Completa todos los campos.'; return; }
+  if(password.length < 4){ errEl.textContent = 'La contraseña debe tener al menos 4 caracteres.'; return; }
+
+  const users = loadUsers();
+  if(users[email]){ errEl.textContent = 'Ya existe una cuenta con ese correo. Inicia sesión.'; return; }
+
+  users[email] = { name, password, data: { words: [], activityDates: [] } };
+  saveUsers(users);
+  localStorage.setItem('wordtrack_current_user', email);
+  loginAs(email);
+}
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  const users = loadUsers();
+  const user = users[email];
+  if(!user || user.password !== password){ errEl.textContent = 'Correo o contraseña incorrectos.'; return; }
+
+  localStorage.setItem('wordtrack_current_user', email);
+  loginAs(email);
+}
+
+function loginAs(email){
+  const users = loadUsers();
+  const user = users[email];
+  currentUserEmail = email;
+  state = user.data || { words: [], activityDates: [] };
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-content').style.display = 'flex';
+  document.getElementById('user-name-label').textContent = user.name;
+
+  goTo('inicio');
+}
+
+function doLogout(){
+  currentUserEmail = null;
+  localStorage.removeItem('wordtrack_current_user');
+  document.getElementById('app-content').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  switchAuthTab('login');
+}
+
+function persistState(){
+  const users = loadUsers();
+  if(currentUserEmail && users[currentUserEmail]){
+    users[currentUserEmail].data = state;
+    saveUsers(users);
+  }
+}
+function save(){ persistState(); }
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function logActivity(){
+  const t = todayStr();
+  if(!state.activityDates.includes(t)) state.activityDates.push(t);
+  save();
+}
+
+/* ---------- Navegación ---------- */
+function goTo(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  if(tab==='inicio') renderInicio();
+  if(tab==='vocab') renderVocab();
+  if(tab==='practicar'){ renderHistoria(); renderOraciones(); }
+}
+
+/* ---------- Agregar palabra ---------- */
+function onWordInput(){
+  const raw = document.getElementById('input-en').value.trim().toLowerCase();
+  const tCard = document.getElementById('translation-card');
+  const oCard = document.getElementById('own-example-card');
+  const btn = document.getElementById('btn-guardar');
+  const note = document.getElementById('unknown-note');
+
+  if(!raw){ tCard.style.display='none'; oCard.style.display='none'; btn.style.display='none'; note.style.display='none'; return; }
+
+  const entry = DICTIONARY[raw];
+  if(entry){
+    document.getElementById('translation-text').textContent = entry.es;
+    document.getElementById('examples-list').innerHTML = entry.examples.map(e=>`<div class="example-chip">${e}</div>`).join('');
+    tCard.style.display='block';
+    note.style.display='none';
+  } else {
+    document.getElementById('translation-text').textContent = "(escríbela abajo)";
+    document.getElementById('examples-list').innerHTML = '';
+    tCard.style.display='block';
+    note.style.display='block';
+  }
+  oCard.style.display='block';
+  btn.style.display='block';
+}
+
+function saveWord(){
+  const raw = document.getElementById('input-en').value.trim().toLowerCase();
+  if(!raw) return;
+  const entry = DICTIONARY[raw];
+  const ownExample = document.getElementById('input-own-example').value.trim();
+
+  const word = {
+    en: raw,
+    es: entry ? entry.es : "(pendiente)",
+    examples: entry ? entry.examples : [],
+    ownExample: ownExample,
+    dateAdded: todayStr(),
+    correctCount: 0,
+    status: 'nueva'
+  };
+  const idx = state.words.findIndex(w=>w.en===raw);
+  if(idx>=0) state.words[idx] = word; else state.words.push(word);
+
+  logActivity();
+  save();
+
+  document.getElementById('input-en').value='';
+  document.getElementById('input-own-example').value='';
+  document.getElementById('translation-card').style.display='none';
+  document.getElementById('own-example-card').style.display='none';
+  document.getElementById('btn-guardar').style.display='none';
+  document.getElementById('unknown-note').style.display='none';
+
+  goTo('vocab');
+}
+
+/* ---------- Racha y estadísticas ---------- */
+function computeStreak(){
+  const dates = new Set(state.activityDates);
+  let streak = 0;
+  let cursor = new Date();
+  if(!dates.has(todayStr())) cursor.setDate(cursor.getDate()-1);
+  while(true){
+    const ds = cursor.toISOString().slice(0,10);
+    if(dates.has(ds)){ streak++; cursor.setDate(cursor.getDate()-1); } else break;
+  }
+  return streak;
+}
+
+function renderInicio(){
+  const streak = computeStreak();
+  document.getElementById('streak-badge').textContent = streak;
+  document.getElementById('stat-streak').textContent = streak;
+
+  const now = new Date();
+  const cutoff = new Date(now); cutoff.setDate(cutoff.getDate()-30);
+  const last30 = state.words.filter(w=> new Date(w.dateAdded) >= cutoff);
+  document.getElementById('stat-30d').textContent = last30.length;
+  document.getElementById('stat-total').textContent = state.words.length;
+
+  const recentEl = document.getElementById('recent-list');
+  if(state.words.length===0){
+    recentEl.innerHTML = '<div class="empty-hint">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>';
+  } else {
+    const recent = [...state.words].sort((a,b)=> b.dateAdded.localeCompare(a.dateAdded)).slice(0,5);
+    recentEl.innerHTML = recent.map(w=>`
+      <div class="word-row">
+        <div><div class="en">${w.en}</div><div class="es">${w.es}</div></div>
+        <span class="pill ${w.status}">${w.status}</span>
+      </div>`).join('');
+  }
+}
+
+/* ---------- Mi vocabulario ---------- */
+function renderVocab(){
+  const el = document.getElementById('vocab-list');
+  if(state.words.length===0){
+    el.innerHTML = '<div class="empty-hint">Aún no hay palabras guardadas.</div>';
+    return;
+  }
+  const sorted = [...state.words].sort((a,b)=> b.dateAdded.localeCompare(a.dateAdded));
+  el.innerHTML = sorted.map(w=>`
+    <div class="word-row">
+      <div><div class="en">${w.en}</div><div class="es">${w.es}</div></div>
+      <span class="pill ${w.status}">${w.status}</span>
+    </div>`).join('');
+}
+
+/* ---------- Juegos ---------- */
+function switchGame(which){
+  document.getElementById('subtab-historia').classList.toggle('active', which==='historia');
+  document.getElementById('subtab-oraciones').classList.toggle('active', which==='oraciones');
+  document.getElementById('game-historia').style.display = which==='historia' ? 'block':'none';
+  document.getElementById('game-oraciones').style.display = which==='oraciones' ? 'block':'none';
+}
+
+function knownWords(){
+  return state.words.filter(w=> DICTIONARY[w.en]);
+}
+
+function renderHistoria(){
+  const el = document.getElementById('historia-content');
+  const words = knownWords();
+  if(words.length < 3){
+    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras del banco de demo para generar una historia.</div>';
+    return;
+  }
+  const chosen = [...words].sort(()=>0.5-Math.random()).slice(0, Math.min(6, words.length));
+  const sentences = chosen.map(w=>{
+    const sentence = DICTIONARY[w.en].examples[0];
+    const marked = sentence.replace(new RegExp('\\\\b'+w.en+'\\\\b','i'), m=>
+      `<span class="word" onclick="this.classList.toggle('revealed')">${m}<span class="tooltip">${w.es} — "${sentence}"</span></span>`);
+    return marked;
+  });
+  el.innerHTML = `
+    <p class="story-text">${sentences.join(' ')}</p>
+    <p class="note">Toca una palabra subrayada si no recuerdas su significado.</p>
+    <button class="btn secondary small" onclick="renderHistoria()">🔄 Nueva historia</button>
+  `;
+  logActivity();
+}
+
+let quizState = null;
+function renderOraciones(){
+  const el = document.getElementById('oraciones-content');
+  const words = knownWords();
+  if(words.length < 4){
+    el.innerHTML = '<div class="empty-hint">Guarda al menos 4 palabras del banco de demo para jugar.</div>';
+    return;
+  }
+  const chosen = [...words].sort(()=>0.5-Math.random()).slice(0, Math.min(5, words.length));
+  quizState = { questions: chosen.map(w=>({
+      word: w.en,
+      sentence: DICTIONARY[w.en].examples[0],
+      answered:false
+    })), score:0 };
+  paintOraciones();
+}
+
+function paintOraciones(){
+  const el = document.getElementById('oraciones-content');
+  const words = knownWords();
+  el.innerHTML = quizState.questions.map((q,i)=>{
+    const blankSentence = q.sentence.replace(new RegExp('\\\\b'+q.word+'\\\\b','i'), '<span class="blank">_____</span>');
+    const opts = [...new Set([q.word, ...words.map(w=>w.en)])].sort(()=>0.5-Math.random()).slice(0,4);
+    if(!opts.includes(q.word)) opts[0]=q.word;
+    return `
+      <div class="fill-q">
+        <div class="fill-sentence">${i+1}. ${blankSentence}</div>
+        <div class="options">
+          ${opts.map(o=>`<button class="option-btn" onclick="answerQuiz(${i}, '${o}', this)">${o}</button>`).join('')}
+        </div>
+      </div>`;
+  }).join('') + `<div id="quiz-result"></div>`;
+}
+
+function answerQuiz(i, chosen, btnEl){
+  const q = quizState.questions[i];
+  if(q.answered) return;
+  q.answered = true;
+  const correct = chosen === q.word;
+  if(correct) quizState.score++;
+  btnEl.classList.add(correct ? 'correct' : 'incorrect');
+  btnEl.parentElement.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  if(!correct){
+    btnEl.parentElement.querySelectorAll('.option-btn').forEach(b=>{
+      if(b.textContent===q.word) b.classList.add('correct');
+    });
+  }
+  const w = state.words.find(w=>w.en===q.word);
+  if(w){
+    if(correct){ w.correctCount++; if(w.correctCount>=3) w.status='dominada'; else w.status='practicando'; }
+    save();
+  }
+  if(quizState.questions.every(q=>q.answered)){
+    document.getElementById('quiz-result').innerHTML = `
+      <div class="score-banner">
+        <div class="big">${quizState.score}/${quizState.questions.length}</div>
+        <div class="note">respuestas correctas</div>
+        <button class="btn secondary small" style="margin-top:14px" onclick="renderOraciones()">🔄 Jugar otra ronda</button>
+      </div>`;
+    logActivity();
+  }
+}
+
+/* ---------- PWA: instalación en el celular ---------- */
+let deferredInstallPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function updateInstallBanner(){
+  const banner = document.getElementById('install-banner');
+  if(!banner) return;
+  if(isStandalone){ banner.style.display = 'none'; return; } // ya instalada
+  if(isIOS){
+    document.getElementById('install-banner-text').textContent = 'Toca "Instalar" y sigue los pasos para agregarla a tu pantalla de inicio.';
+    banner.style.display = 'block';
+  } else if(deferredInstallPrompt){
+    document.getElementById('install-banner-text').textContent = 'Úsala como una app, con ícono en tu pantalla de inicio.';
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallBanner();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  updateInstallBanner();
+});
+
+function handleInstallClick(){
+  if(isIOS){
+    document.getElementById('ios-install-modal').style.display = 'flex';
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(() => {
+      deferredInstallPrompt = null;
+      updateInstallBanner();
+    });
+  }
+}
+
+/* Registrar el service worker (solo funciona si la página se sirve por http/https, no como archivo local) */
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {/* ignorar en entornos sin soporte */});
+  });
+}
+
+/* ---------- Init: retomar sesión si ya había una activa ---------- */
+(function initSession(){
+  const savedEmail = localStorage.getItem('wordtrack_current_user');
+  const users = loadUsers();
+  if(savedEmail && users[savedEmail]){
+    loginAs(savedEmail);
+  }
+  updateInstallBanner();
+})();
+</script>
+</body>
+</html>
