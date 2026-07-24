@@ -91,6 +91,15 @@
   .btn.secondary{ background:var(--card); color:var(--blue-dark); border:2px solid var(--blue); }
   .btn.small{ padding:8px 14px; font-size:13px; width:auto; display:inline-block; }
   .more-examples-btn{ margin-top:8px; }
+  /* El botón de Guardar en Agregar queda fijo arriba del menú de abajo,
+     para que siempre esté a la vista aunque la lista de ejemplos crezca. */
+  #screen-agregar{ padding-bottom:78px; }
+  #btn-guardar{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:calc(70px + env(safe-area-inset-bottom));
+    width:calc(100% - 40px); max-width:440px; z-index:30;
+    box-shadow:0 -4px 14px rgba(20,40,70,0.18);
+  }
   nav.tabbar{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
     background:var(--card); display:flex; border-top:1px solid var(--border); padding:8px 6px calc(8px + env(safe-area-inset-bottom));
