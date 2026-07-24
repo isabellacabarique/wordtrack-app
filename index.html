@@ -42,6 +42,9 @@
     flex-wrap:wrap; gap:8px; row-gap:10px;
   }
   header.topbar h1{ font-size:20px; margin:0; }
+  .brand-row{ display:flex; align-items:center; gap:8px; }
+  .brand-icon{ height:30px; width:30px; display:block; }
+  .brand-wordmark{ height:20px; display:block; }
   header.topbar .right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   header.topbar .badge{
     background:var(--card); border-radius:20px; padding:6px 12px; font-size:13px; color:var(--blue-dark); font-weight:600;
@@ -181,8 +184,11 @@
     min-height:100vh; display:flex; flex-direction:column; justify-content:center;
     padding:24px; max-width:480px; margin:0 auto; width:100%; box-sizing:border-box;
   }
-  .auth-logo{ text-align:center; font-size:26px; font-weight:700; margin-bottom:6px; }
-  .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .auth-logo{ text-align:center; margin-bottom:6px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .auth-logo .brand-icon{ height:64px; width:64px; }
+  .auth-logo .brand-wordmark{ height:34px; }
+  .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:6px; }
+  .auth-by{ text-align:center; color:var(--muted); font-size:12px; margin-bottom:24px; }
   .auth-tabs{ display:flex; gap:8px; margin-bottom:20px; }
   .auth-tabs button{
     flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
@@ -200,8 +206,12 @@
 
 <!-- ===================== PANTALLA DE AUTENTICACIÓN (simulada) ===================== -->
 <div id="auth-screen">
-  <div class="auth-logo">👋 WordTrack</div>
+  <div class="auth-logo">
+    <img class="brand-icon" src="icon-192.png" alt="WordTrack">
+    <img class="brand-wordmark" src="wordmark.png" alt="WordTrack">
+  </div>
   <div class="auth-sub">Guarda tu vocabulario y practica cuando quieras</div>
+  <div class="auth-by">by Immersa Academy</div>
 
   <div class="auth-tabs">
     <button class="active" id="tab-login" onclick="switchAuthTab('login')">Iniciar sesión</button>
@@ -245,7 +255,7 @@
 <div class="phone" id="app-content" style="display:none">
 
   <header class="topbar">
-    <h1>👋 WordTrack</h1>
+    <h1 class="brand-row"><img class="brand-icon" src="icon-192.png" alt=""><img class="brand-wordmark" src="wordmark.png" alt="WordTrack"></h1>
     <div class="right">
       <div class="badge">🔥 <span id="streak-badge">0</span> días</div>
       <button class="user-chip" id="user-chip" onclick="doLogout()" title="Cerrar sesión">👤 <span id="user-name-label"></span> · Salir</button>
