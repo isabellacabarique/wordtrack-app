@@ -7,7 +7,7 @@
 
 <!-- PWA: permite "Agregar a pantalla de inicio" -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1ea1e8">
+<meta name="theme-color" content="#6d4ce0">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -111,16 +111,54 @@
   }
   .subtabs button.active{ border-color:var(--blue); color:var(--blue-dark); background:#eaf6ff; }
   .story-text{ font-size:17px; line-height:1.8; }
-  .story-text .word{
+  .word{
     text-decoration:underline; text-decoration-color:var(--blue); text-decoration-thickness:2px;
     color:var(--blue-dark); font-weight:800; cursor:pointer; position:relative;
   }
-  .story-text .word.revealed{ background:#fff4d6; border-radius:4px; padding:0 3px; }
+  .word.revealed{ background:#fff4d6; border-radius:4px; padding:0 3px; }
   .tooltip{
     display:none; position:absolute; bottom:130%; left:0; background:var(--text); color:#fff;
     padding:8px 12px; border-radius:10px; font-size:13px; width:220px; z-index:5; line-height:1.4;
   }
-  .story-text .word.revealed .tooltip{ display:block; }
+  .word.revealed .tooltip{ display:block; }
+  .word-highlight{
+    font-weight:800; text-decoration:underline; text-decoration-color:var(--blue);
+    text-decoration-thickness:2px; color:var(--blue-dark);
+  }
+
+  /* Menú de Practicar */
+  .menu-grid{ display:flex; flex-direction:column; gap:12px; }
+  .menu-card{
+    display:flex; align-items:center; gap:14px; text-align:left; width:100%;
+    background:var(--card); border:none; border-radius:var(--radius); padding:16px;
+    box-shadow:0 1px 3px rgba(20,40,70,0.06); cursor:pointer; font-family:inherit;
+  }
+  .menu-card .menu-icon{ font-size:28px; flex-shrink:0; }
+  .menu-card .menu-title{ font-weight:700; font-size:15px; }
+  .menu-card .menu-desc{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .back-btn{
+    background:none; border:none; color:var(--blue-dark); font-family:inherit; font-weight:600;
+    font-size:14px; padding:0 0 14px; cursor:pointer; display:flex; align-items:center; gap:4px;
+  }
+
+  /* Juego de rol: burbujas de chat */
+  .chat-row{ display:flex; margin-bottom:12px; }
+  .chat-row.b{ justify-content:flex-end; }
+  .chat-col{ max-width:82%; }
+  .chat-row.b .chat-col{ text-align:right; }
+  .chat-speaker{ font-size:11px; color:var(--muted); font-weight:700; margin-bottom:3px; }
+  .chat-bubble{
+    display:inline-block; text-align:left; padding:10px 14px; border-radius:16px;
+    font-size:14px; line-height:1.5;
+  }
+  .chat-row.a .chat-bubble{ background:#eef2f7; border-bottom-left-radius:4px; }
+  .chat-row.b .chat-bubble{ background:#eaf6ff; border-bottom-right-radius:4px; }
+
+  /* Preguntar */
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .qa-block{ margin-bottom:14px; }
+  .qa-question{ font-weight:700; font-size:14px; margin-bottom:8px; }
+  .qa-answer{ font-size:14px; line-height:1.6; }
   .fill-q{ margin-bottom:22px; }
   .fill-sentence{ font-size:16px; margin-bottom:10px; }
   .fill-sentence .blank{ border-bottom:2px solid var(--blue); padding:0 4px; font-weight:700; color:var(--blue-dark); }
@@ -138,7 +176,10 @@
   .score-banner .big{ font-size:40px; font-weight:700; color:var(--blue-dark); }
 
   /* Auth */
-  #auth-screen{ min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:24px; }
+  #auth-screen{
+    min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    padding:24px; max-width:480px; margin:0 auto; width:100%; box-sizing:border-box;
+  }
   .auth-logo{ text-align:center; font-size:26px; font-weight:700; margin-bottom:6px; }
   .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
   .auth-tabs{ display:flex; gap:8px; margin-bottom:20px; }
@@ -281,22 +322,99 @@
 
     <!-- PRACTICAR -->
     <section class="screen" id="screen-practicar">
-      <div class="subtabs">
-        <button class="active" id="subtab-historia" onclick="switchGame('historia')">📖 Historia</button>
-        <button id="subtab-oraciones" onclick="switchGame('oraciones')">✏️ Completar</button>
+
+      <div id="practicar-menu">
+        <h2 class="section-title">Elige cómo quieres practicar</h2>
+        <div class="menu-grid">
+          <button class="menu-card" onclick="openGame('historia')">
+            <div class="menu-icon">📖</div>
+            <div>
+              <div class="menu-title">Leer historia</div>
+              <div class="menu-desc">Un relato corto con tus palabras en negrilla</div>
+            </div>
+          </button>
+          <button class="menu-card" onclick="openGame('oraciones')">
+            <div class="menu-icon">✏️</div>
+            <div>
+              <div class="menu-title">Completar</div>
+              <div class="menu-desc">Elige la palabra correcta para cada oración</div>
+            </div>
+          </button>
+          <button class="menu-card" onclick="openGame('preguntar')">
+            <div class="menu-icon">💬</div>
+            <div>
+              <div class="menu-title">Preguntar</div>
+              <div class="menu-desc">Haz preguntas sobre cualquier palabra guardada</div>
+            </div>
+          </button>
+          <button class="menu-card" onclick="openGame('rol')">
+            <div class="menu-icon">🎭</div>
+            <div>
+              <div class="menu-title">Juego de rol</div>
+              <div class="menu-desc">Lee una conversación natural entre dos personas</div>
+            </div>
+          </button>
+          <button class="menu-card" onclick="openGame('comprension')">
+            <div class="menu-icon">🧠</div>
+            <div>
+              <div class="menu-title">Comprensión</div>
+              <div class="menu-desc">Responde si entendiste el mensaje completo</div>
+            </div>
+          </button>
+        </div>
       </div>
 
-      <div id="game-historia">
+      <div id="game-historia" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()">← Volver</button>
         <div class="card" id="historia-content">
           <div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una historia.</div>
         </div>
       </div>
 
-      <div id="game-oraciones" style="display:none">
+      <div id="game-oraciones" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()">← Volver</button>
         <div class="card" id="oraciones-content">
           <div class="empty-hint">Guarda al menos 4 palabras con traducción para jugar.</div>
         </div>
       </div>
+
+      <div id="game-preguntar" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <div class="card">
+          <label class="field-label">Sobre qué palabra (opcional)</label>
+          <select id="pregunta-word-select" style="width:100%; padding:8px 0; border:none; border-bottom:2px solid var(--border); background:transparent; font-size:16px; font-family:inherit; color:var(--text);">
+            <option value="">Cualquiera / general</option>
+          </select>
+
+          <div class="chip-row">
+            <button class="option-btn" onclick="fillPregunta('Dame ejemplos de esta palabra')">Dame ejemplos</button>
+            <button class="option-btn" onclick="fillPregunta('Dame sinónimos de esta palabra')">Sinónimos</button>
+            <button class="option-btn" onclick="fillPregunta('¿Qué significa esta palabra?')">¿Qué significa?</button>
+            <button class="option-btn" onclick="fillPregunta('¿Cómo uso esta palabra en una oración?')">¿Cómo la uso?</button>
+          </div>
+
+          <label class="field-label" style="margin-top:16px;">Tu pregunta</label>
+          <textarea id="pregunta-input" placeholder="Escribe tu pregunta aquí..."></textarea>
+          <button class="btn" style="margin-top:12px;" onclick="askVocab()">Preguntar</button>
+        </div>
+
+        <div id="pregunta-respuestas"></div>
+      </div>
+
+      <div id="game-rol" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <div class="card" id="rol-content">
+          <div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una conversación.</div>
+        </div>
+      </div>
+
+      <div id="game-comprension" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <div class="card" id="comprension-content">
+          <div class="empty-hint">Guarda al menos 3 palabras con traducción para jugar.</div>
+        </div>
+      </div>
+
     </section>
 
   </main>
@@ -433,7 +551,7 @@ function goTo(tab){
   document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   if(tab==='inicio') renderInicio();
   if(tab==='vocab') renderVocab();
-  if(tab==='practicar'){ renderHistoria(); renderOraciones(); }
+  if(tab==='practicar'){ showPracticarMenu(); }
 }
 
 /* ---------- Agregar palabra (traducción real generada por IA) ---------- */
@@ -560,12 +678,36 @@ function renderVocab(){
     </div>`).join('');
 }
 
-/* ---------- Juegos ---------- */
-function switchGame(which){
-  document.getElementById('subtab-historia').classList.toggle('active', which==='historia');
-  document.getElementById('subtab-oraciones').classList.toggle('active', which==='oraciones');
-  document.getElementById('game-historia').style.display = which==='historia' ? 'block':'none';
-  document.getElementById('game-oraciones').style.display = which==='oraciones' ? 'block':'none';
+/* ---------- Juegos: menú de Practicar ---------- */
+function showPracticarMenu(){
+  document.getElementById('practicar-menu').style.display = 'block';
+  document.querySelectorAll('.game-panel').forEach(p => p.style.display = 'none');
+}
+
+function openGame(name){
+  document.getElementById('practicar-menu').style.display = 'none';
+  document.querySelectorAll('.game-panel').forEach(p => p.style.display = 'none');
+  document.getElementById('game-'+name).style.display = 'block';
+  if(name==='historia') renderHistoria();
+  if(name==='oraciones') renderOraciones();
+  if(name==='preguntar') renderPreguntar();
+  if(name==='rol') renderRol();
+  if(name==='comprension') renderComprension();
+}
+
+function closeGame(){
+  showPracticarMenu();
+}
+
+/* Convierte **palabra** en un span clicable que muestra el significado guardado */
+function markClickableWords(text, wds){
+  return text.replace(/\*\*(.+?)\*\*/g, (match, word) => {
+    const lower = word.toLowerCase();
+    let lookup = wds.find(w => w.en.toLowerCase() === lower);
+    if(!lookup) lookup = wds.find(w => lower.startsWith(w.en.toLowerCase()) || w.en.toLowerCase().startsWith(lower));
+    const meaning = lookup ? lookup.es : '';
+    return `<span class="word" onclick="this.classList.toggle('revealed')">${word}<span class="tooltip">${meaning}</span></span>`;
+  });
 }
 
 function knownWords(){
@@ -672,6 +814,161 @@ async function answerQuiz(i, chosen, btnEl){
         <button class="btn secondary small" style="margin-top:14px" onclick="renderOraciones()">🔄 Jugar otra ronda</button>
       </div>`;
     await logActivity();
+  }
+}
+
+/* ---------- Preguntar ---------- */
+function renderPreguntar(){
+  const sel = document.getElementById('pregunta-word-select');
+  const wds = knownWords();
+  sel.innerHTML = '<option value="">Cualquiera / general</option>' +
+    wds.map(w => `<option value="${w.en}">${w.en} (${w.es})</option>`).join('');
+  document.getElementById('pregunta-respuestas').innerHTML = '';
+}
+
+function fillPregunta(template){
+  const sel = document.getElementById('pregunta-word-select');
+  const word = sel.value;
+  document.getElementById('pregunta-input').value = word ? `${template}: "${word}"` : `${template}.`;
+}
+
+async function askVocab(){
+  const question = document.getElementById('pregunta-input').value.trim();
+  const word = document.getElementById('pregunta-word-select').value;
+  if(!question) return;
+
+  const container = document.getElementById('pregunta-respuestas');
+  const qId = 'qa-' + Date.now();
+  container.insertAdjacentHTML('afterbegin', `
+    <div class="card qa-block" id="${qId}">
+      <div class="qa-question">🙋 ${question}</div>
+      <div class="note">Pensando…</div>
+    </div>
+  `);
+  document.getElementById('pregunta-input').value = '';
+
+  try{
+    const { data, error } = await sb.functions.invoke('ask-vocab', {
+      body: { question, word: word || undefined }
+    });
+    if(error || !data || data.error || !data.answer) throw new Error((data && data.error) || (error && error.message) || 'error');
+    document.querySelector(`#${qId} .note`).outerHTML = `<div class="qa-answer">${data.answer.replace(/\n/g,'<br>')}</div>`;
+    logActivity();
+  }catch(e){
+    const noteEl = document.querySelector(`#${qId} .note`);
+    if(noteEl) noteEl.textContent = 'No se pudo responder esta vez. Intenta de nuevo.';
+  }
+}
+
+/* ---------- Juego de rol ---------- */
+async function renderRol(){
+  const el = document.getElementById('rol-content');
+  const wds = knownWords();
+  if(wds.length < 3){
+    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una conversación.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="empty-hint">🎭 Generando conversación…</div>';
+
+  try{
+    const { data, error } = await sb.functions.invoke('generate-roleplay', {
+      body: { words: wds.map(w => ({ en: w.en, es: w.es })) }
+    });
+    if(error || !data || data.error || !Array.isArray(data.lines) || data.lines.length===0){
+      throw new Error((data && data.error) || (error && error.message) || 'error');
+    }
+
+    const html = data.lines.map(l => {
+      const side = l.speaker === 'B' ? 'b' : 'a';
+      return `
+        <div class="chat-row ${side}">
+          <div class="chat-col">
+            <div class="chat-speaker">Persona ${l.speaker}</div>
+            <div class="chat-bubble">${markClickableWords(l.text, wds)}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      ${html}
+      <p class="note" style="margin-top:14px;">Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.</p>
+      <button class="btn secondary small" onclick="renderRol()">🔄 Nueva conversación</button>
+    `;
+    logActivity();
+  }catch(e){
+    el.innerHTML = `
+      <div class="empty-hint">No se pudo generar la conversación esta vez.</div>
+      <button class="btn secondary small" onclick="renderRol()">Reintentar</button>
+    `;
+  }
+}
+
+/* ---------- Comprensión ---------- */
+let compQuizState = null;
+
+async function renderComprension(){
+  const el = document.getElementById('comprension-content');
+  const wds = knownWords();
+  if(wds.length < 3){
+    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para jugar.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="empty-hint">🧠 Generando preguntas…</div>';
+
+  try{
+    const { data, error } = await sb.functions.invoke('generate-comprehension', {
+      body: { words: wds.map(w => ({ en: w.en, es: w.es })) }
+    });
+    if(error || !data || data.error || !Array.isArray(data.questions) || data.questions.length===0){
+      throw new Error((data && data.error) || (error && error.message) || 'error');
+    }
+    compQuizState = { questions: data.questions.map(q => ({ ...q, answered: false })), score: 0 };
+    paintComprension();
+    logActivity();
+  }catch(e){
+    el.innerHTML = `
+      <div class="empty-hint">No se pudieron generar las preguntas esta vez.</div>
+      <button class="btn secondary small" onclick="renderComprension()">Reintentar</button>
+    `;
+  }
+}
+
+function markHighlight(sentence){
+  return sentence.replace(/\*\*(.+?)\*\*/g, (m, word) => `<span class="word-highlight">${word}</span>`);
+}
+
+function paintComprension(){
+  const el = document.getElementById('comprension-content');
+  el.innerHTML = compQuizState.questions.map((q, i) => `
+    <div class="fill-q">
+      <div class="fill-sentence" style="line-height:1.6;">${i+1}. ${markHighlight(q.sentence)}</div>
+      <div class="note" style="margin:8px 0 10px;">Selecciona la opción que mejor resume la oración:</div>
+      <div class="options" style="flex-direction:column; align-items:stretch;">
+        ${q.options.map((o, oi) => `<button class="option-btn" style="text-align:left;" onclick="answerComp(${i}, ${oi}, this)">${o}</button>`).join('')}
+      </div>
+    </div>
+  `).join('') + `<div id="comp-result"></div>`;
+}
+
+function answerComp(i, chosenIndex, btnEl){
+  const q = compQuizState.questions[i];
+  if(q.answered) return;
+  q.answered = true;
+  const correct = chosenIndex === q.correct_index;
+  if(correct) compQuizState.score++;
+
+  const optButtons = btnEl.parentElement.querySelectorAll('.option-btn');
+  optButtons.forEach(b => b.disabled = true);
+  btnEl.classList.add(correct ? 'correct' : 'incorrect');
+  if(!correct) optButtons[q.correct_index].classList.add('correct');
+
+  if(compQuizState.questions.every(q => q.answered)){
+    document.getElementById('comp-result').innerHTML = `
+      <div class="score-banner">
+        <div class="big">${compQuizState.score}/${compQuizState.questions.length}</div>
+        <div class="note">respuestas correctas</div>
+        <button class="btn secondary small" style="margin-top:14px" onclick="renderComprension()">🔄 Nueva ronda</button>
+      </div>`;
   }
 }
 
