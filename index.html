@@ -104,7 +104,9 @@
   .screen.active{ display:block; }
   .word-row{
     display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);
+    cursor:pointer;
   }
+  .word-row:active{ background:var(--blue-tint); }
   .word-row:last-child{ border-bottom:none; }
   .word-row .en{ font-weight:600; }
   .word-row .es{ color:var(--muted); font-size:13px; }
@@ -1003,8 +1005,8 @@ function renderVocab(){
   el.innerHTML = sorted.map(w=>{
     const pc = w.practice_count || 0;
     return `
-    <div class="word-row">
-      <div><div class="en">${w.en} <button class="speak-btn small" onclick="speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
+    <div class="word-row" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
+      <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
       <div style="text-align:right;">
         <span class="pill ${w.status}">${statusLabel(w.status)}</span>
         <div class="note" style="margin-top:4px;">${practiceLabel(pc)}</div>
@@ -1081,7 +1083,7 @@ async function openWordPopup(text, context){
   const already = words.find(w => w.en.toLowerCase() === lower);
   if(already){
     document.getElementById('wp-translation').textContent = already.es || '';
-    document.getElementById('wp-examples').innerHTML = (already.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    document.getElementById('wp-examples').innerHTML = (already.examples||[]).map(e=>`<div class="example-chip">${e}</div>`).join('');
     saveBtn.textContent = t('already_saved');
     saveBtn.disabled = true;
     saveBtn.style.display = 'block';
