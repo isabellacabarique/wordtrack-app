@@ -118,6 +118,7 @@
     font-family:inherit; font-weight:600; font-size:13px; color:var(--muted); cursor:pointer;
   }
   .subtabs button.active{ border-color:var(--blue); color:var(--blue-dark); background:var(--blue-tint); }
+  .story-title{ font-size:21px; font-weight:800; color:var(--text); line-height:1.3; margin:0 0 14px; }
   .story-text{ font-size:17px; line-height:1.8; }
   .word{
     text-decoration:underline; text-decoration-color:var(--blue); text-decoration-thickness:2px;
@@ -1192,8 +1193,10 @@ async function renderHistoria(){
 
     const paragraphs = data.story.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
     const html = paragraphs.map(p => `<p class="story-text">${renderStoryHtml(p, wds)}</p>`).join('');
+    const titleHtml = data.title ? `<h3 class="story-title">${data.title}</h3>` : '';
 
     el.innerHTML = `
+      ${titleHtml}
       ${html}
       <p class="note">${t('note_story_words')}</p>
       <button class="btn secondary small" onclick="renderHistoria()">${t('btn_new_story')}</button>
