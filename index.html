@@ -130,6 +130,31 @@
     text-decoration-thickness:2px; color:var(--blue-dark);
   }
 
+  /* Palabras "tocables" para traducción rápida (ejemplos, historia) */
+  .tap-word{
+    cursor:pointer; border-bottom:1.5px dotted var(--muted); padding-bottom:1px;
+  }
+  .tap-word:active{ background:var(--blue-tint); }
+
+  /* Popup de traducción rápida (bottom sheet) */
+  #word-popup-overlay{
+    display:none; position:fixed; inset:0; background:rgba(20,30,45,0.35); z-index:40;
+  }
+  #word-popup{
+    display:none; position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px; background:var(--card); border-radius:20px 20px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(20,30,45,0.15);
+    z-index:41; box-sizing:border-box; max-height:70vh; overflow-y:auto;
+  }
+  #word-popup .wp-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  #word-popup .wp-word{ font-size:20px; font-weight:800; color:var(--text); }
+  #word-popup .wp-close{
+    background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer; line-height:1; padding:2px 6px;
+  }
+  #word-popup .wp-translation{ font-size:17px; color:var(--blue-dark); font-weight:700; margin-top:6px; }
+  #word-popup .wp-examples{ margin-top:12px; }
+  #word-popup .wp-save-btn{ margin-top:16px; }
+
   /* Menú de Practicar */
   .menu-grid{ display:flex; flex-direction:column; gap:12px; }
   .menu-card{
@@ -448,6 +473,18 @@
     </div>
   </div>
 
+  <!-- Popup de traducción rápida al tocar cualquier palabra (ejemplos, historia) -->
+  <div id="word-popup-overlay" onclick="closeWordPopup()"></div>
+  <div id="word-popup">
+    <div class="wp-top">
+      <div class="wp-word" id="wp-word">—</div>
+      <button class="wp-close" onclick="closeWordPopup()">✕</button>
+    </div>
+    <div class="wp-translation" id="wp-translation">Buscando…</div>
+    <div class="wp-examples" id="wp-examples"></div>
+    <button class="btn wp-save-btn" id="wp-save-btn" onclick="saveInlineWord()" style="display:none">+ Guardar en mi vocabulario</button>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -595,7 +632,7 @@ async function lookupWord(raw){
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
     lastLookup = { word: raw, es: data.es || '', examples: data.examples || [] };
     document.getElementById('translation-text').textContent = data.es || '(sin traducción)';
-    document.getElementById('examples-list').innerHTML = (data.examples||[]).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    document.getElementById('examples-list').innerHTML = (data.examples||[]).map(e=>`<div class="example-chip">${wrapTapWords(e)}</div>`).join('');
     note.style.display = 'none';
   }catch(e){
     lastLookup = { word: raw, es: '', examples: [] };
@@ -733,6 +770,101 @@ function knownWords(){
   return words.filter(w => w.examples && w.examples.length > 0);
 }
 
+/* ---------- Popup de traducción rápida: tocar cualquier palabra ---------- */
+const inlineWordCache = {};
+let inlineWordCurrent = null;
+
+function wrapTapWords(text){
+  return text.replace(/([A-Za-zÀ-ÿ']+)/g, (w) => `<span class="tap-word" onclick="openWordPopup('${w.replace(/'/g, "\\'")}')">${w}</span>`);
+}
+
+async function fetchInlineWord(lower){
+  if(inlineWordCache[lower]) return inlineWordCache[lower];
+  const { data, error } = await sb.functions.invoke('translate-word', { body: { word: lower } });
+  if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
+  inlineWordCache[lower] = data;
+  return data;
+}
+
+async function openWordPopup(word){
+  inlineWordCurrent = word;
+  document.getElementById('word-popup-overlay').style.display = 'block';
+  document.getElementById('word-popup').style.display = 'block';
+  document.getElementById('wp-word').textContent = word;
+  document.getElementById('wp-examples').innerHTML = '';
+  const saveBtn = document.getElementById('wp-save-btn');
+  saveBtn.style.display = 'none';
+
+  const lower = word.toLowerCase();
+  const already = words.find(w => w.en.toLowerCase() === lower);
+  if(already){
+    document.getElementById('wp-translation').textContent = already.es || '';
+    document.getElementById('wp-examples').innerHTML = (already.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    saveBtn.textContent = '✓ Ya está en tu vocabulario';
+    saveBtn.disabled = true;
+    saveBtn.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('wp-translation').textContent = 'Buscando…';
+  try{
+    const data = await fetchInlineWord(lower);
+    document.getElementById('wp-translation').textContent = data.es || '(sin traducción)';
+    document.getElementById('wp-examples').innerHTML = (data.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    saveBtn.textContent = '+ Guardar en mi vocabulario';
+    saveBtn.disabled = false;
+    saveBtn.style.display = 'block';
+  }catch(e){
+    document.getElementById('wp-translation').textContent = 'No se pudo traducir esta vez.';
+  }
+}
+
+function closeWordPopup(){
+  document.getElementById('word-popup-overlay').style.display = 'none';
+  document.getElementById('word-popup').style.display = 'none';
+  inlineWordCurrent = null;
+}
+
+async function saveInlineWord(){
+  if(!inlineWordCurrent || !currentUser) return;
+  const lower = inlineWordCurrent.toLowerCase();
+  const data = inlineWordCache[lower];
+  if(!data) return;
+  const btn = document.getElementById('wp-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+  const { error } = await sb.from('words').upsert({
+    user_id: currentUser.id,
+    en: lower,
+    es: data.es || '(pendiente)',
+    examples: data.examples || [],
+    own_example: '',
+    date_added: todayStr()
+  }, { onConflict: 'user_id,en' });
+  if(error){ btn.textContent = 'No se pudo guardar'; return; }
+  await loadUserData();
+  btn.textContent = '✓ Guardada';
+}
+
+/* Convierte el texto de una historia en HTML: las palabras **marcadas** (ya
+   guardadas) muestran su significado al tocarlas; el resto de las palabras
+   también son tocables y abren el popup de traducción rápida. */
+function renderStoryHtml(rawText, wds){
+  const parts = rawText.split(/(\*\*.+?\*\*)/g);
+  return parts.map(part => {
+    const m = part.match(/^\*\*(.+)\*\*$/);
+    if(m){
+      const word = m[1];
+      const lower = word.toLowerCase();
+      let lookup = wds.find(w => w.en.toLowerCase() === lower);
+      if(!lookup) lookup = wds.find(w => lower.startsWith(w.en.toLowerCase()) || w.en.toLowerCase().startsWith(lower));
+      const meaning = lookup ? lookup.es : '';
+      return `<span class="word" onclick="this.classList.toggle('revealed')">${word}<span class="tooltip">${meaning}</span></span>`;
+    }
+    return wrapTapWords(part);
+  }).join('');
+}
+
 async function renderHistoria(){
   const el = document.getElementById('historia-content');
   const wds = knownWords();
@@ -748,17 +880,12 @@ async function renderHistoria(){
     });
     if(error || !data || data.error || !data.story) throw new Error((data && data.error) || (error && error.message) || 'error');
 
-    const html = data.story.replace(/\*\*(.+?)\*\*/g, (match, word) => {
-      const lower = word.toLowerCase();
-      let lookup = wds.find(w => w.en.toLowerCase() === lower);
-      if(!lookup) lookup = wds.find(w => lower.startsWith(w.en.toLowerCase()) || w.en.toLowerCase().startsWith(lower));
-      const meaning = lookup ? lookup.es : '';
-      return `<span class="word" onclick="this.classList.toggle('revealed')">${word}<span class="tooltip">${meaning}</span></span>`;
-    });
+    const paragraphs = data.story.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+    const html = paragraphs.map(p => `<p class="story-text">${renderStoryHtml(p, wds)}</p>`).join('');
 
     el.innerHTML = `
-      <p class="story-text">${html}</p>
-      <p class="note">Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.</p>
+      ${html}
+      <p class="note">Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.</p>
       <button class="btn secondary small" onclick="renderHistoria()">🔄 Nueva historia</button>
     `;
     logActivity();
