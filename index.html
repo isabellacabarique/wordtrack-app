@@ -565,6 +565,8 @@ const I18N = {
     section_examples: 'Ejemplos de uso', note_read_aloud: 'Recuerda leer los ejemplos en voz alta.',
     label_own_example: 'Escribe tu propio ejemplo (en inglés)', btn_save: 'Guardar',
     note_unknown: 'No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.',
+    note_not_english: 'Esto no parece estar en inglés. Escribe la palabra o expresión en inglés que quieres aprender.',
+    note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
     section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
     practiced_prefix: 'Practicada',
     status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
@@ -630,6 +632,8 @@ const I18N = {
     section_examples: 'Example sentences', note_read_aloud: 'Remember to read the examples out loud.',
     label_own_example: 'Write your own example (in English)', btn_save: 'Save',
     note_unknown: "We couldn't generate the translation automatically. You can write it yourself in the example below and save anyway.",
+    note_not_english: "This doesn't look like English. Type the English word or expression you want to learn.",
+    note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
     section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
     practiced_prefix: 'Practiced',
     status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
@@ -938,6 +942,18 @@ async function lookupWord(raw){
   try{
     const { data, error } = await sb.functions.invoke('translate-word', { body: { word: raw, context: context || undefined } });
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
+
+    if(data.status === 'not_english' || data.status === 'invalid'){
+      lastLookup = { word: raw, es: '', examples: [] };
+      document.getElementById('translation-text').textContent = t('write_below');
+      document.getElementById('examples-list').innerHTML = '';
+      note.textContent = t(data.status === 'not_english' ? 'note_not_english' : 'note_invalid_word');
+      note.style.display = 'block';
+      document.getElementById('own-example-card').style.display = 'block';
+      document.getElementById('btn-guardar').style.display = 'block';
+      return;
+    }
+
     lastLookup = { word: raw, es: data.es || '', examples: data.examples || [] };
     document.getElementById('translation-text').textContent = data.es || t('no_translation');
     document.getElementById('examples-list').innerHTML = renderExamplesHtml(data.examples, true);
@@ -946,6 +962,7 @@ async function lookupWord(raw){
     lastLookup = { word: raw, es: '', examples: [] };
     document.getElementById('translation-text').textContent = t('write_below');
     document.getElementById('examples-list').innerHTML = '';
+    note.textContent = t('note_unknown');
     note.style.display = 'block';
   }
   document.getElementById('own-example-card').style.display = 'block';
