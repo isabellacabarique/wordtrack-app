@@ -90,6 +90,7 @@
   .btn:disabled{ background:#b9d9ee; cursor:not-allowed; }
   .btn.secondary{ background:var(--card); color:var(--blue-dark); border:2px solid var(--blue); }
   .btn.small{ padding:8px 14px; font-size:13px; width:auto; display:inline-block; }
+  .more-examples-btn{ margin-top:8px; }
   nav.tabbar{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
     background:var(--card); display:flex; border-top:1px solid var(--border); padding:8px 6px calc(8px + env(safe-area-inset-bottom));
@@ -142,6 +143,10 @@
     cursor:pointer; border-bottom:1.5px dotted var(--muted); padding-bottom:1px;
   }
   .tap-word:active{ background:var(--blue-tint); }
+  .tap-word-known{
+    text-decoration:underline; text-decoration-color:var(--blue); text-decoration-thickness:2px;
+    color:var(--blue-dark); font-weight:800; border-bottom:none;
+  }
 
   /* Botón para escuchar la pronunciación de una palabra */
   .speak-btn{
@@ -592,6 +597,7 @@ const I18N = {
     btn_translate_selection: '🔍 Traducir selección',
     searching: 'Buscando…', btn_save_vocab: '+ Guardar en mi vocabulario',
     already_saved: '✓ Ya está en tu vocabulario', no_translation: '(sin traducción)',
+    btn_more_examples: 'Ver más ejemplos',
     err_translate: 'No se pudo traducir esta vez.', saving: 'Guardando…', err_save: 'No se pudo guardar', saved_check: '✓ Guardada',
     auth_sub: 'Guarda tu vocabulario y practica cuando quieras',
     tab_login: 'Iniciar sesión', tab_signup: 'Crear cuenta',
@@ -656,6 +662,7 @@ const I18N = {
     btn_translate_selection: '🔍 Translate selection',
     searching: 'Searching…', btn_save_vocab: '+ Save to my vocabulary',
     already_saved: '✓ Already in your vocabulary', no_translation: '(no translation)',
+    btn_more_examples: 'Show more examples',
     err_translate: "Couldn't translate this time.", saving: 'Saving…', err_save: "Couldn't save", saved_check: '✓ Saved',
     auth_sub: 'Save your vocabulary and practice whenever you want',
     tab_login: 'Log in', tab_signup: 'Sign up',
@@ -883,6 +890,17 @@ function goTo(tab){
   if(tab==='practicar'){ showPracticarMenu(); }
 }
 
+/* Arma el HTML de una lista de ejemplos: muestra los primeros 3 y, si hay más,
+   agrega un botón "Ver más ejemplos" que revela el resto. */
+function renderExamplesHtml(examples, wrap){
+  const list = examples || [];
+  const toChip = e => `<div class="example-chip">${wrap ? wrapTapWords(e) : e}</div>`;
+  const shownHtml = list.slice(0,3).map(toChip).join('');
+  if(list.length <= 3) return shownHtml;
+  const extraHtml = list.slice(3).map(toChip).join('');
+  return `${shownHtml}<div class="examples-more" style="display:none">${extraHtml}</div><button type="button" class="btn secondary small more-examples-btn" onclick="this.previousElementSibling.style.display='block'; this.style.display='none';">${t('btn_more_examples')}</button>`;
+}
+
 /* ---------- Agregar palabra (traducción real generada por IA) ---------- */
 let searchTimeout = null;
 let lastLookup = { word: null, es: '', examples: [] };
@@ -913,7 +931,7 @@ async function lookupWord(raw){
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
     lastLookup = { word: raw, es: data.es || '', examples: data.examples || [] };
     document.getElementById('translation-text').textContent = data.es || t('no_translation');
-    document.getElementById('examples-list').innerHTML = (data.examples||[]).map(e=>`<div class="example-chip">${wrapTapWords(e)}</div>`).join('');
+    document.getElementById('examples-list').innerHTML = renderExamplesHtml(data.examples, true);
     note.style.display = 'none';
   }catch(e){
     lastLookup = { word: raw, es: '', examples: [] };
@@ -1056,8 +1074,8 @@ const inlineWordCache = {};
 let inlineWordCurrent = null;   // texto (palabra o frase) que está abierto en el popup ahora
 let inlineWordCurrentKey = null; // clave de caché (incluye contexto si aplica)
 
-function wrapTapWords(text){
-  return text.replace(/([A-Za-zÀ-ÿ']+)/g, (w) => `<span class="tap-word" onclick="openWordPopup('${w.replace(/'/g, "\\'")}')">${w}</span>`);
+function wrapTapWords(text, compact){
+  return text.replace(/([A-Za-zÀ-ÿ']+)/g, (w) => `<span class="tap-word" onclick="openWordPopup('${w.replace(/'/g, "\\'")}', null, ${compact ? 'true' : 'false'})">${w}</span>`);
 }
 
 async function fetchInlineWord(lower, context){
@@ -1069,13 +1087,15 @@ async function fetchInlineWord(lower, context){
   return { data, key };
 }
 
-async function openWordPopup(text, context){
+async function openWordPopup(text, context, compact){
   inlineWordCurrent = text;
   inlineWordCurrentKey = null;
   document.getElementById('word-popup-overlay').style.display = 'block';
   document.getElementById('word-popup').style.display = 'block';
   document.getElementById('wp-word').textContent = text;
-  document.getElementById('wp-examples').innerHTML = '';
+  const examplesEl = document.getElementById('wp-examples');
+  examplesEl.innerHTML = '';
+  examplesEl.style.display = compact ? 'none' : 'block';
   const saveBtn = document.getElementById('wp-save-btn');
   saveBtn.style.display = 'none';
 
@@ -1083,7 +1103,7 @@ async function openWordPopup(text, context){
   const already = words.find(w => w.en.toLowerCase() === lower);
   if(already){
     document.getElementById('wp-translation').textContent = already.es || '';
-    document.getElementById('wp-examples').innerHTML = (already.examples||[]).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    if(!compact) examplesEl.innerHTML = renderExamplesHtml(already.examples, false);
     saveBtn.textContent = t('already_saved');
     saveBtn.disabled = true;
     saveBtn.style.display = 'block';
@@ -1095,7 +1115,7 @@ async function openWordPopup(text, context){
     const { data, key } = await fetchInlineWord(lower, context);
     inlineWordCurrentKey = key;
     document.getElementById('wp-translation').textContent = data.es || t('no_translation');
-    document.getElementById('wp-examples').innerHTML = (data.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
+    if(!compact) examplesEl.innerHTML = renderExamplesHtml(data.examples, false);
     saveBtn.textContent = t('btn_save_vocab');
     saveBtn.disabled = false;
     saveBtn.style.display = 'block';
@@ -1168,14 +1188,20 @@ function renderStoryHtml(rawText, wds){
     const m = part.match(/^\*\*(.+)\*\*$/);
     if(m){
       const word = m[1];
-      const lower = word.toLowerCase();
-      let lookup = wds.find(w => w.en.toLowerCase() === lower);
-      if(!lookup) lookup = wds.find(w => lower.startsWith(w.en.toLowerCase()) || w.en.toLowerCase().startsWith(lower));
-      const meaning = lookup ? lookup.es : '';
-      return `<span class="word" onclick="this.classList.toggle('revealed')">${word}<span class="tooltip">${meaning}</span></span>`;
+      return `<span class="tap-word tap-word-known" onclick="openWordPopup('${word.replace(/'/g, "\\'")}', null, true)">${word}</span>`;
     }
-    return wrapTapWords(part);
+    return wrapTapWords(part, true);
   }).join('');
+}
+
+/* Por si la IA devuelve el título en Title Case, lo pasamos a sentence case
+   (solo la primera letra en mayúscula, y "I" siempre en mayúscula). */
+function toSentenceCaseTitle(str){
+  if(!str) return str;
+  let out = str.toLowerCase();
+  out = out.charAt(0).toUpperCase() + out.slice(1);
+  out = out.replace(/\bi\b/g, 'I');
+  return out;
 }
 
 async function renderHistoria(){
@@ -1195,7 +1221,7 @@ async function renderHistoria(){
 
     const paragraphs = data.story.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
     const html = paragraphs.map(p => `<p class="story-text">${renderStoryHtml(p, wds)}</p>`).join('');
-    const titleHtml = data.title ? `<h3 class="story-title">${data.title}</h3>` : '';
+    const titleHtml = data.title ? `<h3 class="story-title">${toSentenceCaseTitle(data.title)}</h3>` : '';
 
     el.innerHTML = `
       ${titleHtml}
