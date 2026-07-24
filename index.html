@@ -185,10 +185,10 @@
     padding:24px; max-width:480px; margin:0 auto; width:100%; box-sizing:border-box;
   }
   .auth-logo{ text-align:center; margin-bottom:6px; display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .auth-logo .brand-icon{ height:64px; width:64px; }
+  .auth-logo .brand-icon{ height:52px; width:52px; }
   .auth-logo .brand-wordmark{ height:34px; }
-  .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:6px; }
-  .auth-by{ text-align:center; color:var(--muted); font-size:12px; margin-bottom:24px; }
+  .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .auth-by{ text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
   .auth-tabs{ display:flex; gap:8px; margin-bottom:20px; }
   .auth-tabs button{
     flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
@@ -211,7 +211,6 @@
     <img class="brand-wordmark" src="wordmark.png" alt="WordTrack">
   </div>
   <div class="auth-sub">Guarda tu vocabulario y practica cuando quieras</div>
-  <div class="auth-by">by Immersa Academy</div>
 
   <div class="auth-tabs">
     <button class="active" id="tab-login" onclick="switchAuthTab('login')">Iniciar sesión</button>
@@ -249,6 +248,7 @@
   </div>
 
   <p class="demo-note">Tus datos se guardan de forma segura en la nube (Supabase). Si tu correo requiere confirmación, revisa tu bandeja de entrada después de crear la cuenta.</p>
+  <div class="auth-by">by Immersa Academy</div>
 </div>
 
 <!-- ===================== APP PRINCIPAL ===================== -->
