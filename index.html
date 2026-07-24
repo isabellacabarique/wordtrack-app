@@ -1270,7 +1270,8 @@ async function answerQuiz(i, chosen, btnEl){
       w.correct_count = (w.correct_count || 0) + 1;
       w.status = w.correct_count >= 3 ? 'dominada' : 'practicando';
     }
-    await sb.from('words').update({ practice_count: w.practice_count, correct_count: w.correct_count, status: w.status }).eq('id', w.id);
+    const { error: pcErr } = await sb.from('words').update({ practice_count: w.practice_count, correct_count: w.correct_count, status: w.status }).eq('id', w.id);
+    if(pcErr) console.error('No se pudo guardar el conteo de práctica (revisa que exista la columna practice_count en Supabase):', pcErr);
   }
   if(quizState.questions.every(q=>q.answered)){
     document.getElementById('quiz-result').innerHTML = `
@@ -1416,7 +1417,8 @@ async function bumpPracticeCount(enWord){
   if(!w) w = words.find(w => lower.includes(w.en.toLowerCase()) || w.en.toLowerCase().includes(lower));
   if(!w) return;
   w.practice_count = (w.practice_count || 0) + 1;
-  await sb.from('words').update({ practice_count: w.practice_count }).eq('id', w.id);
+  const { error: pcErr } = await sb.from('words').update({ practice_count: w.practice_count }).eq('id', w.id);
+  if(pcErr) console.error('No se pudo guardar el conteo de práctica (revisa que exista la columna practice_count en Supabase):', pcErr);
 }
 
 function paintComprension(){
