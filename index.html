@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -53,6 +53,10 @@
   header.topbar .user-chip{
     background:var(--card); border-radius:20px; padding:6px 10px; font-size:12px; color:var(--muted);
     display:flex; align-items:center; gap:6px; cursor:pointer; border:none; font-family:inherit;
+  }
+  .lang-toggle{
+    background:var(--card); border-radius:20px; padding:6px 12px; font-size:12px; font-weight:700; color:var(--blue-dark);
+    border:none; cursor:pointer; font-family:inherit;
   }
   main{ flex:1; padding:0 20px 90px; }
   .card{
@@ -135,6 +139,14 @@
     cursor:pointer; border-bottom:1.5px dotted var(--muted); padding-bottom:1px;
   }
   .tap-word:active{ background:var(--blue-tint); }
+
+  /* Botón para escuchar la pronunciación de una palabra */
+  .speak-btn{
+    background:none; border:none; cursor:pointer; font-size:14px; color:var(--blue-dark);
+    padding:2px 6px; line-height:1; font-family:inherit; font-weight:600; border-radius:20px;
+  }
+  .speak-btn:active{ background:var(--blue-tint); }
+  .speak-btn.small{ font-size:12px; padding:1px 4px; }
 
   /* Botón flotante para traducir una expresión seleccionada (varias palabras) */
   #translate-selection-btn{
@@ -242,44 +254,44 @@
     <img class="brand-icon" src="icon-192.png" alt="WordTrack">
     <img class="brand-wordmark" src="wordmark.png" alt="WordTrack">
   </div>
-  <div class="auth-sub">Guarda tu vocabulario y practica cuando quieras</div>
+  <div class="auth-sub" data-i18n="auth_sub">Guarda tu vocabulario y practica cuando quieras</div>
 
   <div class="auth-tabs">
-    <button class="active" id="tab-login" onclick="switchAuthTab('login')">Iniciar sesión</button>
-    <button id="tab-signup" onclick="switchAuthTab('signup')">Crear cuenta</button>
+    <button class="active" id="tab-login" onclick="switchAuthTab('login')" data-i18n="tab_login">Iniciar sesión</button>
+    <button id="tab-signup" onclick="switchAuthTab('signup')" data-i18n="tab_signup">Crear cuenta</button>
   </div>
 
   <div class="card auth-form active" id="form-login">
     <div class="field-group">
-      <label class="field-label">Correo</label>
-      <input type="email" id="login-email" placeholder="tucorreo@ejemplo.com">
+      <label class="field-label" data-i18n="label_email">Correo</label>
+      <input type="email" id="login-email" placeholder="tucorreo@ejemplo.com" data-i18n-ph="ph_email">
     </div>
     <div class="field-group">
-      <label class="field-label">Contraseña</label>
+      <label class="field-label" data-i18n="label_password">Contraseña</label>
       <input type="password" id="login-password" placeholder="••••••••">
     </div>
-    <button class="btn" onclick="doLogin()">Entrar</button>
+    <button class="btn" onclick="doLogin()" data-i18n="btn_login">Entrar</button>
     <div class="auth-error" id="login-error"></div>
   </div>
 
   <div class="card auth-form" id="form-signup">
     <div class="field-group">
-      <label class="field-label">Nombre</label>
-      <input type="text" id="signup-name" placeholder="Tu nombre">
+      <label class="field-label" data-i18n="label_name">Nombre</label>
+      <input type="text" id="signup-name" placeholder="Tu nombre" data-i18n-ph="ph_name">
     </div>
     <div class="field-group">
-      <label class="field-label">Correo</label>
-      <input type="email" id="signup-email" placeholder="tucorreo@ejemplo.com">
+      <label class="field-label" data-i18n="label_email">Correo</label>
+      <input type="email" id="signup-email" placeholder="tucorreo@ejemplo.com" data-i18n-ph="ph_email">
     </div>
     <div class="field-group">
-      <label class="field-label">Contraseña</label>
-      <input type="password" id="signup-password" placeholder="Mínimo 6 caracteres">
+      <label class="field-label" data-i18n="label_password">Contraseña</label>
+      <input type="password" id="signup-password" placeholder="Mínimo 6 caracteres" data-i18n-ph="ph_password_min">
     </div>
-    <button class="btn" onclick="doSignup()">Crear cuenta</button>
+    <button class="btn" onclick="doSignup()" data-i18n="tab_signup">Crear cuenta</button>
     <div class="auth-error" id="signup-error"></div>
   </div>
 
-  <p class="demo-note">Tus datos se guardan de forma segura en la nube (Supabase). Si tu correo requiere confirmación, revisa tu bandeja de entrada después de crear la cuenta.</p>
+  <p class="demo-note" data-i18n="demo_note">Tus datos se guardan de forma segura en la nube (Supabase). Si tu correo requiere confirmación, revisa tu bandeja de entrada después de crear la cuenta.</p>
   <div class="auth-by">by Immersa Academy</div>
 </div>
 
@@ -289,8 +301,9 @@
   <header class="topbar">
     <h1 class="brand-row"><img class="brand-icon" src="icon-192.png" alt=""><img class="brand-wordmark" src="wordmark.png" alt="WordTrack"></h1>
     <div class="right">
-      <div class="badge">🔥 <span id="streak-badge">0</span> días</div>
-      <button class="user-chip" id="user-chip" onclick="doLogout()" title="Cerrar sesión">👤 <span id="user-name-label"></span> · Salir</button>
+      <div class="badge">🔥 <span id="streak-badge">0</span> <span data-i18n="days_label">días</span></div>
+      <button class="lang-toggle" id="lang-toggle" onclick="toggleLanguage()" title="Cambiar idioma / Change language">ES</button>
+      <button class="user-chip" id="user-chip" onclick="doLogout()" data-i18n-title="logout_title" title="Cerrar sesión">👤 <span id="user-name-label"></span> · <span data-i18n="logout_label">Salir</span></button>
     </div>
   </header>
 
@@ -302,69 +315,72 @@
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="font-size:26px;">📲</div>
           <div style="flex:1;">
-            <div style="font-weight:700; font-size:14px;">Instala WordTrack en tu celular</div>
-            <div style="font-size:12px; color:var(--muted);" id="install-banner-text">Úsala como una app, con ícono en tu pantalla de inicio.</div>
+            <div style="font-weight:700; font-size:14px;" data-i18n="install_title">Instala WordTrack en tu celular</div>
+            <div style="font-size:12px; color:var(--muted);" id="install-banner-text" data-i18n="install_banner_text">Úsala como una app, con ícono en tu pantalla de inicio.</div>
           </div>
         </div>
-        <button class="btn small" style="margin-top:12px;" id="install-btn" onclick="handleInstallClick()">Instalar</button>
+        <button class="btn small" style="margin-top:12px;" id="install-btn" onclick="handleInstallClick()" data-i18n="btn_install">Instalar</button>
       </div>
 
       <div class="stats-row">
         <div class="stat">
           <div class="num" id="stat-streak">0</div>
-          <div class="label">Racha actual</div>
+          <div class="label" data-i18n="stat_streak_label">Racha actual</div>
         </div>
         <div class="stat">
           <div class="num" id="stat-30d">0</div>
-          <div class="label">Palabras (30 días)</div>
+          <div class="label" data-i18n="stat_30d_label">Palabras (30 días)</div>
         </div>
         <div class="stat">
           <div class="num" id="stat-total">0</div>
-          <div class="label">Total guardadas</div>
+          <div class="label" data-i18n="stat_total_label">Total guardadas</div>
         </div>
       </div>
 
-      <h2 class="section-title">Últimas palabras agregadas</h2>
+      <h2 class="section-title" data-i18n="section_recent">Últimas palabras agregadas</h2>
       <div class="card" id="recent-list">
-        <div class="empty-hint">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>
+        <div class="empty-hint" data-i18n="empty_no_words">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>
       </div>
 
-      <button class="btn" style="margin-top:6px" onclick="goTo('agregar')">+ Agregar palabra nueva</button>
+      <button class="btn" style="margin-top:6px" onclick="goTo('agregar')" data-i18n="btn_add_new_word">+ Agregar palabra nueva</button>
     </section>
 
     <!-- AGREGAR -->
     <section class="screen" id="screen-agregar">
       <div class="card">
         <div class="field-group">
-          <label class="field-label">Contexto (opcional)</label>
-          <input type="text" id="input-context" placeholder="Escribe aquí...">
+          <label class="field-label" data-i18n="label_context">Contexto (opcional)</label>
+          <input type="text" id="input-context" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here">
         </div>
-        <label class="field-label">inglés</label>
-        <input type="text" id="input-en" placeholder="Escribe una palabra o expresión..." oninput="onWordInput()">
+        <label class="field-label" data-i18n="label_word">palabra</label>
+        <input type="text" id="input-en" placeholder="Escribe una palabra o expresión..." oninput="onWordInput()" data-i18n-ph="ph_word_input">
       </div>
 
       <div class="card" id="translation-card" style="display:none">
-        <label class="field-label">español</label>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <label class="field-label" style="margin:0;" data-i18n="label_translation">español</label>
+          <button class="speak-btn" onclick="speakWord(document.getElementById('input-en').value)" data-i18n="btn_listen">🔊 Escuchar</button>
+        </div>
         <div class="translation" id="translation-text">—</div>
-        <h2 class="section-title" style="margin-top:18px">Ejemplos de uso</h2>
-        <p class="note" style="margin:0 0 10px;">Recuerda leer los ejemplos en voz alta.</p>
+        <h2 class="section-title" style="margin-top:18px" data-i18n="section_examples">Ejemplos de uso</h2>
+        <p class="note" style="margin:0 0 10px;" data-i18n="note_read_aloud">Recuerda leer los ejemplos en voz alta.</p>
         <div id="examples-list"></div>
       </div>
 
       <div class="card" id="own-example-card" style="display:none">
-        <label class="field-label">Escribe tu propio ejemplo (en inglés)</label>
-        <textarea id="input-own-example" placeholder="Escribe aquí..."></textarea>
+        <label class="field-label" data-i18n="label_own_example">Escribe tu propio ejemplo (en inglés)</label>
+        <textarea id="input-own-example" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here"></textarea>
       </div>
 
-      <button class="btn" id="btn-guardar" style="display:none" onclick="saveWord()">Guardar</button>
-      <p class="note" id="unknown-note" style="display:none">No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.</p>
+      <button class="btn" id="btn-guardar" style="display:none" onclick="saveWord()" data-i18n="btn_save">Guardar</button>
+      <p class="note" id="unknown-note" style="display:none" data-i18n="note_unknown">No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.</p>
     </section>
 
     <!-- MI VOCABULARIO -->
     <section class="screen" id="screen-vocab">
-      <h2 class="section-title">Mi vocabulario</h2>
+      <h2 class="section-title" data-i18n="section_my_vocab">Mi vocabulario</h2>
       <div class="card" id="vocab-list">
-        <div class="empty-hint">Aún no hay palabras guardadas.</div>
+        <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
       </div>
     </section>
 
@@ -372,89 +388,89 @@
     <section class="screen" id="screen-practicar">
 
       <div id="practicar-menu">
-        <h2 class="section-title">Elige cómo quieres practicar</h2>
+        <h2 class="section-title" data-i18n="section_choose_practice">Elige cómo quieres practicar</h2>
         <div class="menu-grid">
           <button class="menu-card" onclick="openGame('historia')">
             <div class="menu-icon">📖</div>
             <div>
-              <div class="menu-title">Leer historia</div>
-              <div class="menu-desc">Un relato corto con tus palabras en negrilla</div>
+              <div class="menu-title" data-i18n="menu_historia_title">Leer historia</div>
+              <div class="menu-desc" data-i18n="menu_historia_desc">Un relato corto con tus palabras en negrilla</div>
             </div>
           </button>
           <button class="menu-card" onclick="openGame('oraciones')">
             <div class="menu-icon">✏️</div>
             <div>
-              <div class="menu-title">Completar</div>
-              <div class="menu-desc">Elige la palabra correcta para cada oración</div>
+              <div class="menu-title" data-i18n="menu_completar_title">Completar</div>
+              <div class="menu-desc" data-i18n="menu_completar_desc">Elige la palabra correcta para cada oración</div>
             </div>
           </button>
           <button class="menu-card" onclick="openGame('preguntar')">
             <div class="menu-icon">💬</div>
             <div>
-              <div class="menu-title">Preguntar</div>
-              <div class="menu-desc">Haz preguntas sobre cualquier palabra guardada</div>
+              <div class="menu-title" data-i18n="menu_preguntar_title">Preguntar</div>
+              <div class="menu-desc" data-i18n="menu_preguntar_desc">Haz preguntas sobre cualquier palabra guardada</div>
             </div>
           </button>
           <button class="menu-card" onclick="openGame('rol')">
             <div class="menu-icon">🎭</div>
             <div>
-              <div class="menu-title">Juego de rol</div>
-              <div class="menu-desc">Lee una conversación natural entre dos personas</div>
+              <div class="menu-title" data-i18n="menu_rol_title">Juego de rol</div>
+              <div class="menu-desc" data-i18n="menu_rol_desc">Lee una conversación natural entre dos personas</div>
             </div>
           </button>
           <button class="menu-card" onclick="openGame('comprension')">
             <div class="menu-icon">🧠</div>
             <div>
-              <div class="menu-title">Comprensión</div>
-              <div class="menu-desc">Responde si entendiste el mensaje completo</div>
+              <div class="menu-title" data-i18n="menu_comprension_title">Comprensión</div>
+              <div class="menu-desc" data-i18n="menu_comprension_desc">Responde si entendiste el mensaje completo</div>
             </div>
           </button>
         </div>
       </div>
 
       <div id="game-historia" class="game-panel" style="display:none">
-        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
         <div class="card" id="historia-content">
-          <div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una historia.</div>
+          <div class="empty-hint" data-i18n="empty_historia">Guarda al menos 3 palabras con traducción para generar una historia.</div>
         </div>
       </div>
 
       <div id="game-oraciones" class="game-panel" style="display:none">
-        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
         <div class="card" id="oraciones-content">
-          <div class="empty-hint">Guarda al menos 4 palabras con traducción para jugar.</div>
+          <div class="empty-hint" data-i18n="empty_oraciones">Guarda al menos 4 palabras con traducción para jugar.</div>
         </div>
       </div>
 
       <div id="game-preguntar" class="game-panel" style="display:none">
-        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
         <div class="card">
           <div class="chip-row">
-            <button class="option-btn" onclick="fillPregunta('Dame ejemplos de: ')">Dame ejemplos de:</button>
-            <button class="option-btn" onclick="fillPregunta('Sinónimos de: ')">Sinónimos de:</button>
-            <button class="option-btn" onclick="fillPregunta('Qué significa: ')">Qué significa:</button>
-            <button class="option-btn" onclick="fillPregunta('Cómo uso: ')">Cómo uso:</button>
+            <button class="option-btn" onclick="fillPregunta(t('chip_examples')+' ')" data-i18n="chip_examples">Dame ejemplos de:</button>
+            <button class="option-btn" onclick="fillPregunta(t('chip_synonyms')+' ')" data-i18n="chip_synonyms">Sinónimos de:</button>
+            <button class="option-btn" onclick="fillPregunta(t('chip_meaning')+' ')" data-i18n="chip_meaning">Qué significa:</button>
+            <button class="option-btn" onclick="fillPregunta(t('chip_howuse')+' ')" data-i18n="chip_howuse">Cómo uso:</button>
           </div>
 
-          <label class="field-label" style="margin-top:16px;">Tu pregunta</label>
-          <textarea id="pregunta-input" placeholder="Escribe tu pregunta aquí..."></textarea>
-          <button class="btn" style="margin-top:12px;" onclick="askVocab()">Preguntar</button>
+          <label class="field-label" style="margin-top:16px;" data-i18n="label_your_question">Tu pregunta</label>
+          <textarea id="pregunta-input" placeholder="Escribe tu pregunta aquí..." data-i18n-ph="ph_question"></textarea>
+          <button class="btn" style="margin-top:12px;" onclick="askVocab()" data-i18n="btn_ask">Preguntar</button>
         </div>
 
         <div id="pregunta-respuestas"></div>
       </div>
 
       <div id="game-rol" class="game-panel" style="display:none">
-        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
         <div class="card" id="rol-content">
-          <div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una conversación.</div>
+          <div class="empty-hint" data-i18n="empty_rol">Guarda al menos 3 palabras con traducción para generar una conversación.</div>
         </div>
       </div>
 
       <div id="game-comprension" class="game-panel" style="display:none">
-        <button class="back-btn" onclick="closeGame()">← Volver</button>
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
         <div class="card" id="comprension-content">
-          <div class="empty-hint">Guarda al menos 3 palabras con traducción para jugar.</div>
+          <div class="empty-hint" data-i18n="empty_comprension">Guarda al menos 3 palabras con traducción para jugar.</div>
         </div>
       </div>
 
@@ -463,36 +479,39 @@
   </main>
 
   <nav class="tabbar">
-    <button class="active" data-tab="inicio" onclick="goTo('inicio')"><span class="icon">🏠</span>Inicio</button>
-    <button data-tab="agregar" onclick="goTo('agregar')"><span class="icon">➕</span>Agregar</button>
-    <button data-tab="vocab" onclick="goTo('vocab')"><span class="icon">📚</span>Vocabulario</button>
-    <button data-tab="practicar" onclick="goTo('practicar')"><span class="icon">🎮</span>Practicar</button>
+    <button class="active" data-tab="inicio" onclick="goTo('inicio')"><span class="icon">🏠</span><span data-i18n="nav_inicio">Inicio</span></button>
+    <button data-tab="agregar" onclick="goTo('agregar')"><span class="icon">➕</span><span data-i18n="nav_agregar">Agregar</span></button>
+    <button data-tab="vocab" onclick="goTo('vocab')"><span class="icon">📚</span><span data-i18n="nav_vocab">Vocabulario</span></button>
+    <button data-tab="practicar" onclick="goTo('practicar')"><span class="icon">🎮</span><span data-i18n="nav_practicar">Practicar</span></button>
   </nav>
 
   <!-- Instrucciones de instalación para iPhone (Safari no tiene instalación automática) -->
   <div id="ios-install-modal" style="display:none; position:fixed; inset:0; background:rgba(20,40,70,0.45); z-index:20; align-items:flex-end; justify-content:center;">
     <div class="card" style="width:100%; max-width:480px; border-radius:24px 24px 0 0; margin:0;">
-      <div style="font-weight:700; font-size:16px; margin-bottom:10px;">Instalar en iPhone</div>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;">1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.</p>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;">2. Baja y elige <strong>"Agregar a inicio"</strong>.</p>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;">3. Listo — te quedará el ícono de WordTrack en tu pantalla.</p>
-      <button class="btn secondary" onclick="document.getElementById('ios-install-modal').style.display='none'">Entendido</button>
+      <div style="font-weight:700; font-size:16px; margin-bottom:10px;" data-i18n="ios_title">Instalar en iPhone</div>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;" data-i18n-html="ios_step1">1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 8px;" data-i18n-html="ios_step2">2. Baja y elige <strong>"Agregar a inicio"</strong>.</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;" data-i18n="ios_step3">3. Listo — te quedará el ícono de WordTrack en tu pantalla.</p>
+      <button class="btn secondary" onclick="document.getElementById('ios-install-modal').style.display='none'" data-i18n="btn_understood">Entendido</button>
     </div>
   </div>
 
   <!-- Botón flotante: aparece cuando el estudiante selecciona/subraya una expresión en la historia -->
-  <button id="translate-selection-btn">🔍 Traducir selección</button>
+  <button id="translate-selection-btn" data-i18n="btn_translate_selection">🔍 Traducir selección</button>
 
   <!-- Popup de traducción rápida al tocar cualquier palabra (ejemplos, historia) -->
   <div id="word-popup-overlay" onclick="closeWordPopup()"></div>
   <div id="word-popup">
     <div class="wp-top">
-      <div class="wp-word" id="wp-word">—</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="wp-word" id="wp-word">—</div>
+        <button class="speak-btn" onclick="speakWord(document.getElementById('wp-word').textContent)">🔊</button>
+      </div>
       <button class="wp-close" onclick="closeWordPopup()">✕</button>
     </div>
-    <div class="wp-translation" id="wp-translation">Buscando…</div>
+    <div class="wp-translation" id="wp-translation" data-i18n="searching">Buscando…</div>
     <div class="wp-examples" id="wp-examples"></div>
-    <button class="btn wp-save-btn" id="wp-save-btn" onclick="saveInlineWord()" style="display:none">+ Guardar en mi vocabulario</button>
+    <button class="btn wp-save-btn" id="wp-save-btn" onclick="saveInlineWord()" style="display:none" data-i18n="btn_save_vocab">+ Guardar en mi vocabulario</button>
   </div>
 
 </div>
@@ -516,6 +535,193 @@ let activityDates = [];   // fechas de actividad, cargadas desde la tabla "activ
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
+/* ---------- Idioma de la interfaz (español / inglés) ---------- */
+const I18N = {
+  es: {
+    days_label: 'días', logout_title: 'Cerrar sesión', logout_label: 'Salir',
+    install_title: 'Instala WordTrack en tu celular',
+    install_banner_text: 'Úsala como una app, con ícono en tu pantalla de inicio.',
+    install_banner_ios_text: 'Toca "Instalar" y sigue los pasos para agregarla a tu pantalla de inicio.',
+    btn_install: 'Instalar',
+    stat_streak_label: 'Racha actual', stat_30d_label: 'Palabras (30 días)', stat_total_label: 'Total guardadas',
+    section_recent: 'Últimas palabras agregadas',
+    empty_no_words: 'Todavía no has agregado palabras. Ve a "Agregar" para empezar.',
+    btn_add_new_word: '+ Agregar palabra nueva',
+    label_context: 'Contexto (opcional)', ph_write_here: 'Escribe aquí...',
+    label_word: 'palabra', ph_word_input: 'Escribe una palabra o expresión...',
+    label_translation: 'español', btn_listen: '🔊 Escuchar',
+    section_examples: 'Ejemplos de uso', note_read_aloud: 'Recuerda leer los ejemplos en voz alta.',
+    label_own_example: 'Escribe tu propio ejemplo (en inglés)', btn_save: 'Guardar',
+    note_unknown: 'No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.',
+    section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
+    practiced_prefix: 'Practicada',
+    status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
+    section_choose_practice: 'Elige cómo quieres practicar',
+    menu_historia_title: 'Leer historia', menu_historia_desc: 'Un relato corto con tus palabras en negrilla',
+    menu_completar_title: 'Completar', menu_completar_desc: 'Elige la palabra correcta para cada oración',
+    menu_preguntar_title: 'Preguntar', menu_preguntar_desc: 'Haz preguntas sobre cualquier palabra guardada',
+    menu_rol_title: 'Juego de rol', menu_rol_desc: 'Lee una conversación natural entre dos personas',
+    menu_comprension_title: 'Comprensión', menu_comprension_desc: 'Responde si entendiste el mensaje completo',
+    back_btn: '← Volver',
+    empty_historia: 'Guarda al menos 3 palabras con traducción para generar una historia.',
+    empty_oraciones: 'Guarda al menos 4 palabras con traducción para jugar.',
+    empty_rol: 'Guarda al menos 3 palabras con traducción para generar una conversación.',
+    empty_comprension: 'Guarda al menos 3 palabras con traducción para jugar.',
+    chip_examples: 'Dame ejemplos de:', chip_synonyms: 'Sinónimos de:', chip_meaning: 'Qué significa:', chip_howuse: 'Cómo uso:',
+    label_your_question: 'Tu pregunta', ph_question: 'Escribe tu pregunta aquí...', btn_ask: 'Preguntar',
+    thinking: 'Pensando…', err_no_answer: 'No se pudo responder esta vez. Intenta de nuevo.',
+    generating_story: '✍️ Generando tu historia…',
+    note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
+    btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
+    note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
+    generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
+    note_rol_words: 'Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.',
+    btn_new_conv: '🔄 Nueva conversación', err_conv: 'No se pudo generar la conversación esta vez.',
+    generating_questions: '🧠 Generando preguntas…',
+    select_best_option: 'Selecciona la opción que mejor resume la oración:',
+    btn_new_round2: '🔄 Nueva ronda', err_questions: 'No se pudieron generar las preguntas esta vez.',
+    nav_inicio: 'Inicio', nav_agregar: 'Agregar', nav_vocab: 'Vocabulario', nav_practicar: 'Practicar',
+    ios_title: 'Instalar en iPhone',
+    ios_step1: '1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.',
+    ios_step2: '2. Baja y elige <strong>"Agregar a inicio"</strong>.',
+    ios_step3: '3. Listo — te quedará el ícono de WordTrack en tu pantalla.',
+    btn_understood: 'Entendido',
+    btn_translate_selection: '🔍 Traducir selección',
+    searching: 'Buscando…', btn_save_vocab: '+ Guardar en mi vocabulario',
+    already_saved: '✓ Ya está en tu vocabulario', no_translation: '(sin traducción)',
+    err_translate: 'No se pudo traducir esta vez.', saving: 'Guardando…', err_save: 'No se pudo guardar', saved_check: '✓ Guardada',
+    auth_sub: 'Guarda tu vocabulario y practica cuando quieras',
+    tab_login: 'Iniciar sesión', tab_signup: 'Crear cuenta',
+    label_email: 'Correo', ph_email: 'tucorreo@ejemplo.com', label_password: 'Contraseña', btn_login: 'Entrar',
+    label_name: 'Nombre', ph_name: 'Tu nombre', ph_password_min: 'Mínimo 6 caracteres',
+    demo_note: 'Tus datos se guardan de forma segura en la nube (Supabase). Si tu correo requiere confirmación, revisa tu bandeja de entrada después de crear la cuenta.',
+    err_fill_all: 'Completa todos los campos.', err_pw_short: 'La contraseña debe tener al menos 6 caracteres.',
+    msg_account_created: 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.',
+    err_login: 'Correo o contraseña incorrectos (o falta confirmar tu correo).',
+    err_save_word: 'No se pudo guardar la palabra: ',
+    searching_translation: 'Buscando traducción…', write_below: '(escríbela abajo)',
+  },
+  en: {
+    days_label: 'days', logout_title: 'Log out', logout_label: 'Log out',
+    install_title: 'Install WordTrack on your phone',
+    install_banner_text: 'Use it like an app, with an icon on your home screen.',
+    install_banner_ios_text: 'Tap "Install" and follow the steps to add it to your home screen.',
+    btn_install: 'Install',
+    stat_streak_label: 'Current streak', stat_30d_label: 'Words (30 days)', stat_total_label: 'Total saved',
+    section_recent: 'Recently added words',
+    empty_no_words: 'You haven\'t added any words yet. Go to "Add" to get started.',
+    btn_add_new_word: '+ Add new word',
+    label_context: 'Context (optional)', ph_write_here: 'Type here...',
+    label_word: 'word', ph_word_input: 'Type a word or expression...',
+    label_translation: 'translation', btn_listen: '🔊 Listen',
+    section_examples: 'Example sentences', note_read_aloud: 'Remember to read the examples out loud.',
+    label_own_example: 'Write your own example (in English)', btn_save: 'Save',
+    note_unknown: "We couldn't generate the translation automatically. You can write it yourself in the example below and save anyway.",
+    section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
+    practiced_prefix: 'Practiced',
+    status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
+    section_choose_practice: 'Choose how you want to practice',
+    menu_historia_title: 'Read a story', menu_historia_desc: 'A short story with your words in bold',
+    menu_completar_title: 'Fill in the blank', menu_completar_desc: 'Choose the right word for each sentence',
+    menu_preguntar_title: 'Ask', menu_preguntar_desc: 'Ask questions about any saved word',
+    menu_rol_title: 'Roleplay', menu_rol_desc: 'Read a natural conversation between two people',
+    menu_comprension_title: 'Comprehension', menu_comprension_desc: 'Answer to check if you understood the full message',
+    back_btn: '← Back',
+    empty_historia: 'Save at least 3 words with a translation to generate a story.',
+    empty_oraciones: 'Save at least 4 words with a translation to play.',
+    empty_rol: 'Save at least 3 words with a translation to generate a conversation.',
+    empty_comprension: 'Save at least 3 words with a translation to play.',
+    chip_examples: 'Give me examples of:', chip_synonyms: 'Synonyms for:', chip_meaning: 'What does this mean:', chip_howuse: 'How do I use:',
+    label_your_question: 'Your question', ph_question: 'Type your question here...', btn_ask: 'Ask',
+    thinking: 'Thinking…', err_no_answer: "Couldn't answer this time. Try again.",
+    generating_story: '✍️ Generating your story…',
+    note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
+    btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
+    note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
+    generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
+    note_rol_words: "The bold words are the ones you saved. Tap them if you don't remember their meaning.",
+    btn_new_conv: '🔄 New conversation', err_conv: "Couldn't generate the conversation this time.",
+    generating_questions: '🧠 Generating questions…',
+    select_best_option: 'Choose the option that best summarizes the sentence:',
+    btn_new_round2: '🔄 New round', err_questions: "Couldn't generate the questions this time.",
+    nav_inicio: 'Home', nav_agregar: 'Add', nav_vocab: 'Vocabulary', nav_practicar: 'Practice',
+    ios_title: 'Install on iPhone',
+    ios_step1: '1. Tap the <strong>Share</strong> icon (□↑) in the Safari bar.',
+    ios_step2: '2. Scroll down and choose <strong>"Add to Home Screen"</strong>.',
+    ios_step3: '3. Done — the WordTrack icon will appear on your screen.',
+    btn_understood: 'Got it',
+    btn_translate_selection: '🔍 Translate selection',
+    searching: 'Searching…', btn_save_vocab: '+ Save to my vocabulary',
+    already_saved: '✓ Already in your vocabulary', no_translation: '(no translation)',
+    err_translate: "Couldn't translate this time.", saving: 'Saving…', err_save: "Couldn't save", saved_check: '✓ Saved',
+    auth_sub: 'Save your vocabulary and practice whenever you want',
+    tab_login: 'Log in', tab_signup: 'Sign up',
+    label_email: 'Email', ph_email: 'youremail@example.com', label_password: 'Password', btn_login: 'Log in',
+    label_name: 'Name', ph_name: 'Your name', ph_password_min: 'At least 6 characters',
+    demo_note: 'Your data is stored securely in the cloud (Supabase). If your email needs confirmation, check your inbox after creating your account.',
+    err_fill_all: 'Please fill in all fields.', err_pw_short: 'Password must be at least 6 characters.',
+    msg_account_created: 'Account created. Check your email to confirm it, then log in.',
+    err_login: "Incorrect email or password (or your email isn't confirmed yet).",
+    err_save_word: "Couldn't save the word: ",
+    searching_translation: 'Searching for translation…', write_below: '(write it below)',
+  }
+};
+
+let currentLang = localStorage.getItem('wt_lang') || 'es';
+
+function t(key){
+  const dict = I18N[currentLang] || I18N.es;
+  return (key in dict) ? dict[key] : (I18N.es[key] || key);
+}
+
+function practiceLabel(n){
+  n = n || 0;
+  if(currentLang === 'en') return `Practiced ${n} ${n===1?'time':'times'}`;
+  return `Practicada ${n} ${n===1?'vez':'veces'}`;
+}
+
+function statusLabel(status){
+  return t('status_' + (status || 'nueva'));
+}
+
+function applyLanguage(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  const htmlRoot = document.getElementById('html-root');
+  if(htmlRoot) htmlRoot.lang = currentLang;
+  const toggle = document.getElementById('lang-toggle');
+  if(toggle) toggle.textContent = currentLang === 'es' ? 'EN' : 'ES';
+  updateInstallBanner();
+  // Volver a pintar las pantallas que ya estén visibles, para que el texto generado por JS también cambie de idioma
+  if(currentUser){
+    renderInicio();
+    renderVocab();
+  }
+}
+
+function setLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem('wt_lang', lang);
+  applyLanguage();
+}
+
+function toggleLanguage(){
+  setLanguage(currentLang === 'es' ? 'en' : 'es');
+}
+
+/* Lee en voz alta una palabra o expresión en inglés (usa la voz del navegador, sin costo) */
+function speakWord(text){
+  if(!text || !text.trim()) return;
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text.trim());
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  window.speechSynthesis.speak(utter);
+}
+
 function switchAuthTab(which){
   document.getElementById('tab-login').classList.toggle('active', which==='login');
   document.getElementById('tab-signup').classList.toggle('active', which==='signup');
@@ -531,8 +737,8 @@ async function doSignup(){
   const errEl = document.getElementById('signup-error');
   errEl.textContent = '';
 
-  if(!name || !email || !password){ errEl.textContent = 'Completa todos los campos.'; return; }
-  if(password.length < 6){ errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+  if(!name || !email || !password){ errEl.textContent = t('err_fill_all'); return; }
+  if(password.length < 6){ errEl.textContent = t('err_pw_short'); return; }
 
   const { data, error } = await sb.auth.signUp({
     email, password,
@@ -545,7 +751,7 @@ async function doSignup(){
     await afterLogin();
   } else {
     errEl.style.color = 'var(--green)';
-    errEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.';
+    errEl.textContent = t('msg_account_created');
     switchAuthTab('login');
   }
 }
@@ -557,7 +763,7 @@ async function doLogin(){
   errEl.textContent = '';
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ errEl.textContent = 'Correo o contraseña incorrectos (o falta confirmar tu correo).'; return; }
+  if(error){ errEl.textContent = t('err_login'); return; }
 
   await afterLogin();
 }
@@ -626,7 +832,7 @@ function onWordInput(){
 
   if(!raw){ tCard.style.display='none'; oCard.style.display='none'; btn.style.display='none'; note.style.display='none'; return; }
 
-  document.getElementById('translation-text').textContent = 'Buscando traducción…';
+  document.getElementById('translation-text').textContent = t('searching_translation');
   document.getElementById('examples-list').innerHTML = '';
   tCard.style.display = 'block';
   note.style.display = 'none';
@@ -641,12 +847,12 @@ async function lookupWord(raw){
     const { data, error } = await sb.functions.invoke('translate-word', { body: { word: raw, context: context || undefined } });
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
     lastLookup = { word: raw, es: data.es || '', examples: data.examples || [] };
-    document.getElementById('translation-text').textContent = data.es || '(sin traducción)';
+    document.getElementById('translation-text').textContent = data.es || t('no_translation');
     document.getElementById('examples-list').innerHTML = (data.examples||[]).map(e=>`<div class="example-chip">${wrapTapWords(e)}</div>`).join('');
     note.style.display = 'none';
   }catch(e){
     lastLookup = { word: raw, es: '', examples: [] };
-    document.getElementById('translation-text').textContent = '(escríbela abajo)';
+    document.getElementById('translation-text').textContent = t('write_below');
     document.getElementById('examples-list').innerHTML = '';
     note.style.display = 'block';
   }
@@ -669,7 +875,7 @@ async function saveWord(){
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
 
-  if(error){ alert('No se pudo guardar la palabra: ' + error.message); return; }
+  if(error){ alert(t('err_save_word') + error.message); return; }
 
   await logActivity();
   await loadUserData();
@@ -712,13 +918,13 @@ function renderInicio(){
 
   const recentEl = document.getElementById('recent-list');
   if(words.length===0){
-    recentEl.innerHTML = '<div class="empty-hint">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>';
+    recentEl.innerHTML = `<div class="empty-hint">${t('empty_no_words')}</div>`;
   } else {
     const recent = [...words].sort((a,b)=> b.date_added.localeCompare(a.date_added)).slice(0,5);
     recentEl.innerHTML = recent.map(w=>`
       <div class="word-row">
-        <div><div class="en">${w.en}</div><div class="es">${w.es}</div></div>
-        <span class="pill ${w.status}">${w.status}</span>
+        <div><div class="en">${w.en} <button class="speak-btn small" onclick="speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
+        <span class="pill ${w.status}">${statusLabel(w.status)}</span>
       </div>`).join('');
   }
 }
@@ -727,7 +933,7 @@ function renderInicio(){
 function renderVocab(){
   const el = document.getElementById('vocab-list');
   if(words.length===0){
-    el.innerHTML = '<div class="empty-hint">Aún no hay palabras guardadas.</div>';
+    el.innerHTML = `<div class="empty-hint">${t('empty_no_saved')}</div>`;
     return;
   }
   const sorted = [...words].sort((a,b)=> b.date_added.localeCompare(a.date_added));
@@ -735,10 +941,10 @@ function renderVocab(){
     const pc = w.practice_count || 0;
     return `
     <div class="word-row">
-      <div><div class="en">${w.en}</div><div class="es">${w.es}</div></div>
+      <div><div class="en">${w.en} <button class="speak-btn small" onclick="speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
       <div style="text-align:right;">
-        <span class="pill ${w.status}">${w.status}</span>
-        <div class="note" style="margin-top:4px;">Practicada ${pc} ${pc===1?'vez':'veces'}</div>
+        <span class="pill ${w.status}">${statusLabel(w.status)}</span>
+        <div class="note" style="margin-top:4px;">${practiceLabel(pc)}</div>
       </div>
     </div>`;
   }).join('');
@@ -813,23 +1019,23 @@ async function openWordPopup(text, context){
   if(already){
     document.getElementById('wp-translation').textContent = already.es || '';
     document.getElementById('wp-examples').innerHTML = (already.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
-    saveBtn.textContent = '✓ Ya está en tu vocabulario';
+    saveBtn.textContent = t('already_saved');
     saveBtn.disabled = true;
     saveBtn.style.display = 'block';
     return;
   }
 
-  document.getElementById('wp-translation').textContent = 'Buscando…';
+  document.getElementById('wp-translation').textContent = t('searching');
   try{
     const { data, key } = await fetchInlineWord(lower, context);
     inlineWordCurrentKey = key;
-    document.getElementById('wp-translation').textContent = data.es || '(sin traducción)';
+    document.getElementById('wp-translation').textContent = data.es || t('no_translation');
     document.getElementById('wp-examples').innerHTML = (data.examples||[]).slice(0,2).map(e=>`<div class="example-chip">${e}</div>`).join('');
-    saveBtn.textContent = '+ Guardar en mi vocabulario';
+    saveBtn.textContent = t('btn_save_vocab');
     saveBtn.disabled = false;
     saveBtn.style.display = 'block';
   }catch(e){
-    document.getElementById('wp-translation').textContent = 'No se pudo traducir esta vez.';
+    document.getElementById('wp-translation').textContent = t('err_translate');
   }
 }
 
@@ -874,7 +1080,7 @@ async function saveInlineWord(){
   if(!data) return;
   const btn = document.getElementById('wp-save-btn');
   btn.disabled = true;
-  btn.textContent = 'Guardando…';
+  btn.textContent = t('saving');
   const { error } = await sb.from('words').upsert({
     user_id: currentUser.id,
     en: lower,
@@ -883,9 +1089,9 @@ async function saveInlineWord(){
     own_example: '',
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
-  if(error){ btn.textContent = 'No se pudo guardar'; return; }
+  if(error){ btn.textContent = t('err_save'); return; }
   await loadUserData();
-  btn.textContent = '✓ Guardada';
+  btn.textContent = t('saved_check');
 }
 
 /* Convierte el texto de una historia en HTML: las palabras **marcadas** (ya
@@ -911,10 +1117,10 @@ async function renderHistoria(){
   const el = document.getElementById('historia-content');
   const wds = knownWords();
   if(wds.length < 3){
-    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una historia.</div>';
+    el.innerHTML = `<div class="empty-hint">${t('empty_historia')}</div>`;
     return;
   }
-  el.innerHTML = '<div class="empty-hint">✍️ Generando tu historia…</div>';
+  el.innerHTML = `<div class="empty-hint">${t('generating_story')}</div>`;
 
   try{
     const { data, error } = await sb.functions.invoke('generate-story', {
@@ -927,14 +1133,14 @@ async function renderHistoria(){
 
     el.innerHTML = `
       ${html}
-      <p class="note">Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.</p>
-      <button class="btn secondary small" onclick="renderHistoria()">🔄 Nueva historia</button>
+      <p class="note">${t('note_story_words')}</p>
+      <button class="btn secondary small" onclick="renderHistoria()">${t('btn_new_story')}</button>
     `;
     logActivity();
   }catch(e){
     el.innerHTML = `
-      <div class="empty-hint">No se pudo generar la historia esta vez.</div>
-      <button class="btn secondary small" onclick="renderHistoria()">Reintentar</button>
+      <div class="empty-hint">${t('err_story')}</div>
+      <button class="btn secondary small" onclick="renderHistoria()">${t('btn_retry')}</button>
     `;
   }
 }
@@ -953,7 +1159,7 @@ function renderOraciones(){
   const el = document.getElementById('oraciones-content');
   const wds = knownWords();
   if(wds.length < 4){
-    el.innerHTML = '<div class="empty-hint">Guarda al menos 4 palabras con traducción para jugar.</div>';
+    el.innerHTML = `<div class="empty-hint">${t('empty_oraciones')}</div>`;
     return;
   }
   const chosen = pickPriorityWords(wds, Math.min(5, wds.length));
@@ -1008,8 +1214,8 @@ async function answerQuiz(i, chosen, btnEl){
     document.getElementById('quiz-result').innerHTML = `
       <div class="score-banner">
         <div class="big">${quizState.score}/${quizState.questions.length}</div>
-        <div class="note">respuestas correctas</div>
-        <button class="btn secondary small" style="margin-top:14px" onclick="renderOraciones()">🔄 Jugar otra ronda</button>
+        <div class="note">${t('note_correct_answers')}</div>
+        <button class="btn secondary small" style="margin-top:14px" onclick="renderOraciones()">${t('btn_new_round')}</button>
       </div>`;
     await logActivity();
   }
@@ -1036,7 +1242,7 @@ async function askVocab(){
   container.insertAdjacentHTML('afterbegin', `
     <div class="card qa-block" id="${qId}">
       <div class="qa-question">🙋 ${question}</div>
-      <div class="note">Pensando…</div>
+      <div class="note">${t('thinking')}</div>
     </div>
   `);
   document.getElementById('pregunta-input').value = '';
@@ -1051,7 +1257,7 @@ async function askVocab(){
   }catch(e){
     console.error('ask-vocab error:', e);
     const noteEl = document.querySelector(`#${qId} .note`);
-    if(noteEl) noteEl.textContent = 'No se pudo responder esta vez. Intenta de nuevo.';
+    if(noteEl) noteEl.textContent = t('err_no_answer');
   }
 }
 
@@ -1060,10 +1266,10 @@ async function renderRol(){
   const el = document.getElementById('rol-content');
   const wds = knownWords();
   if(wds.length < 3){
-    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para generar una conversación.</div>';
+    el.innerHTML = `<div class="empty-hint">${t('empty_rol')}</div>`;
     return;
   }
-  el.innerHTML = '<div class="empty-hint">🎭 Generando conversación…</div>';
+  el.innerHTML = `<div class="empty-hint">${t('generating_conv')}</div>`;
 
   try{
     const { data, error } = await sb.functions.invoke('generate-roleplay', {
@@ -1078,7 +1284,7 @@ async function renderRol(){
       return `
         <div class="chat-row ${side}">
           <div class="chat-col">
-            <div class="chat-speaker">Persona ${l.speaker}</div>
+            <div class="chat-speaker">${t('persona_label')} ${l.speaker}</div>
             <div class="chat-bubble">${markClickableWords(l.text, wds)}</div>
           </div>
         </div>`;
@@ -1086,14 +1292,14 @@ async function renderRol(){
 
     el.innerHTML = `
       ${html}
-      <p class="note" style="margin-top:14px;">Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.</p>
-      <button class="btn secondary small" onclick="renderRol()">🔄 Nueva conversación</button>
+      <p class="note" style="margin-top:14px;">${t('note_rol_words')}</p>
+      <button class="btn secondary small" onclick="renderRol()">${t('btn_new_conv')}</button>
     `;
     logActivity();
   }catch(e){
     el.innerHTML = `
-      <div class="empty-hint">No se pudo generar la conversación esta vez.</div>
-      <button class="btn secondary small" onclick="renderRol()">Reintentar</button>
+      <div class="empty-hint">${t('err_conv')}</div>
+      <button class="btn secondary small" onclick="renderRol()">${t('btn_retry')}</button>
     `;
   }
 }
@@ -1105,10 +1311,10 @@ async function renderComprension(){
   const el = document.getElementById('comprension-content');
   const wds = knownWords();
   if(wds.length < 3){
-    el.innerHTML = '<div class="empty-hint">Guarda al menos 3 palabras con traducción para jugar.</div>';
+    el.innerHTML = `<div class="empty-hint">${t('empty_comprension')}</div>`;
     return;
   }
-  el.innerHTML = '<div class="empty-hint">🧠 Generando preguntas…</div>';
+  el.innerHTML = `<div class="empty-hint">${t('generating_questions')}</div>`;
 
   // Manda primero las palabras menos practicadas, para que la IA les dé prioridad
   const prioritized = [...wds].sort((a,b)=> (a.practice_count||0) - (b.practice_count||0));
@@ -1125,8 +1331,8 @@ async function renderComprension(){
     logActivity();
   }catch(e){
     el.innerHTML = `
-      <div class="empty-hint">No se pudieron generar las preguntas esta vez.</div>
-      <button class="btn secondary small" onclick="renderComprension()">Reintentar</button>
+      <div class="empty-hint">${t('err_questions')}</div>
+      <button class="btn secondary small" onclick="renderComprension()">${t('btn_retry')}</button>
     `;
   }
 }
@@ -1156,7 +1362,7 @@ function paintComprension(){
   el.innerHTML = compQuizState.questions.map((q, i) => `
     <div class="fill-q">
       <div class="fill-sentence" style="line-height:1.6;">${i+1}. ${markHighlight(q.sentence)}</div>
-      <div class="note" style="margin:8px 0 10px;">Selecciona la opción que mejor resume la oración:</div>
+      <div class="note" style="margin:8px 0 10px;">${t('select_best_option')}</div>
       <div class="options" style="flex-direction:column; align-items:stretch;">
         ${q.options.map((o, oi) => `<button class="option-btn" style="text-align:left;" onclick="answerComp(${i}, ${oi}, this)">${o}</button>`).join('')}
       </div>
@@ -1182,8 +1388,8 @@ function answerComp(i, chosenIndex, btnEl){
     document.getElementById('comp-result').innerHTML = `
       <div class="score-banner">
         <div class="big">${compQuizState.score}/${compQuizState.questions.length}</div>
-        <div class="note">respuestas correctas</div>
-        <button class="btn secondary small" style="margin-top:14px" onclick="renderComprension()">🔄 Nueva ronda</button>
+        <div class="note">${t('note_correct_answers')}</div>
+        <button class="btn secondary small" style="margin-top:14px" onclick="renderComprension()">${t('btn_new_round2')}</button>
       </div>`;
   }
 }
@@ -1198,10 +1404,10 @@ function updateInstallBanner(){
   if(!banner) return;
   if(isStandalone){ banner.style.display = 'none'; return; } // ya instalada
   if(isIOS){
-    document.getElementById('install-banner-text').textContent = 'Toca "Instalar" y sigue los pasos para agregarla a tu pantalla de inicio.';
+    document.getElementById('install-banner-text').textContent = t('install_banner_ios_text');
     banner.style.display = 'block';
   } else if(deferredInstallPrompt){
-    document.getElementById('install-banner-text').textContent = 'Úsala como una app, con ícono en tu pantalla de inicio.';
+    document.getElementById('install-banner-text').textContent = t('install_banner_text');
     banner.style.display = 'block';
   } else {
     banner.style.display = 'none';
@@ -1241,6 +1447,7 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 }
 
 /* ---------- Init: retomar sesión si ya había una activa ---------- */
+applyLanguage();
 (async function initSession(){
   const { data: { session } } = await sb.auth.getSession();
   if(session){
