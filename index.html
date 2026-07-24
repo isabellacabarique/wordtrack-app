@@ -91,15 +91,9 @@
   .btn.secondary{ background:var(--card); color:var(--blue-dark); border:2px solid var(--blue); }
   .btn.small{ padding:8px 14px; font-size:13px; width:auto; display:inline-block; }
   .more-examples-btn{ margin-top:8px; }
-  /* El botón de Guardar en Agregar queda fijo arriba del menú de abajo,
-     para que siempre esté a la vista aunque la lista de ejemplos crezca. */
-  #screen-agregar{ padding-bottom:78px; }
-  #btn-guardar{
-    position:fixed; left:50%; transform:translateX(-50%);
-    bottom:calc(70px + env(safe-area-inset-bottom));
-    width:calc(100% - 40px); max-width:440px; z-index:30;
-    box-shadow:0 -4px 14px rgba(20,40,70,0.18);
-  }
+  /* Espacio extra debajo del botón Guardar en Agregar, para que quede más
+     cómodo de alcanzar aunque la lista de ejemplos crezca. */
+  #screen-agregar{ padding-bottom:60px; }
   nav.tabbar{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
     background:var(--card); display:flex; border-top:1px solid var(--border); padding:8px 6px calc(8px + env(safe-area-inset-bottom));
@@ -241,6 +235,10 @@
   .option-btn:disabled{ cursor:default; }
   .empty-hint{ color:var(--muted); font-size:14px; text-align:center; padding:30px 10px; }
   .note{ font-size:12px; color:var(--muted); margin-top:8px; }
+  #unknown-note{
+    font-size:14px; font-weight:600; color:#c97324; background:#fdeee0;
+    border-radius:14px; padding:14px 16px; line-height:1.4; margin-top:4px;
+  }
   .score-banner{ text-align:center; padding:20px; }
   .score-banner .big{ font-size:40px; font-weight:700; color:var(--blue-dark); }
 
@@ -954,12 +952,11 @@ async function lookupWord(raw){
 
     if(data.status === 'not_english' || data.status === 'invalid'){
       lastLookup = { word: raw, es: '', examples: [] };
-      document.getElementById('translation-text').textContent = t('write_below');
-      document.getElementById('examples-list').innerHTML = '';
+      document.getElementById('translation-card').style.display = 'none';
+      document.getElementById('own-example-card').style.display = 'none';
+      document.getElementById('btn-guardar').style.display = 'none';
       note.textContent = t(data.status === 'not_english' ? 'note_not_english' : 'note_invalid_word');
       note.style.display = 'block';
-      document.getElementById('own-example-card').style.display = 'block';
-      document.getElementById('btn-guardar').style.display = 'block';
       return;
     }
 
