@@ -712,11 +712,26 @@ function toggleLanguage(){
 }
 
 /* Lee en voz alta una palabra o expresión en inglés (usa la voz del navegador, sin costo).
-   Elige a propósito una voz de buena calidad en vez de dejar la que el navegador
-   ponga por defecto (que a veces es una voz robótica de baja calidad). */
+   Elige a propósito la mejor voz disponible: prioriza voces "en la nube" (no
+   instaladas localmente en el dispositivo), que casi siempre suenan mucho más
+   humanas y claras que las voces locales tipo robot. */
 let cachedVoices = [];
+let voicesReadyResolvers = [];
+
+function voicesReady(){
+  if(cachedVoices.length) return Promise.resolve();
+  return new Promise(resolve => voicesReadyResolvers.push(resolve));
+}
+
 if('speechSynthesis' in window){
-  const loadVoices = () => { cachedVoices = window.speechSynthesis.getVoices(); };
+  const loadVoices = () => {
+    const v = window.speechSynthesis.getVoices();
+    if(v.length){
+      cachedVoices = v;
+      voicesReadyResolvers.forEach(r => r());
+      voicesReadyResolvers = [];
+    }
+  };
   loadVoices();
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
@@ -725,31 +740,47 @@ function pickBestEnglishVoice(){
   if(!cachedVoices.length) cachedVoices = window.speechSynthesis.getVoices();
   const englishVoices = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
   if(!englishVoices.length) return null;
-  // Nombres de voces conocidas por sonar claras y naturales (Chrome/Android, iOS/Safari, Edge)
+
+  // 1) Nombres de voces conocidas por sonar claras y naturales (Chrome/Android, iOS/Safari, Edge)
   const preferredNames = [
     'Google US English', 'Google UK English Female', 'Google UK English Male',
-    'Samantha', 'Ava', 'Karen',
+    'Samantha', 'Ava (Premium)', 'Ava', 'Karen', 'Moira', 'Tessa',
     'Microsoft Aria Online (Natural) - English (United States)',
+    'Microsoft Jenny Online (Natural) - English (United States)',
     'Microsoft Guy Online (Natural) - English (United States)',
-    'Microsoft Zira Desktop - English (United States)',
+    'Microsoft Ryan Online (Natural) - English (United Kingdom)',
   ];
   for(const name of preferredNames){
     const found = englishVoices.find(v => v.name === name);
     if(found) return found;
   }
+
+  // 2) Cualquier voz "en la nube" (no local) suele sonar mucho más natural que las locales
+  const cloudUS = englishVoices.find(v => v.lang === 'en-US' && v.localService === false);
+  if(cloudUS) return cloudUS;
+  const cloudAny = englishVoices.find(v => v.localService === false);
+  if(cloudAny) return cloudAny;
+
+  // 3) Como último recurso, cualquier voz en-US, si no cualquier voz en inglés
   const usVoice = englishVoices.find(v => v.lang === 'en-US');
   return usVoice || englishVoices[0];
 }
 
-function speakWord(text){
-  if(!text || !text.trim()) return;
+async function speakWord(text){
+  text = (text || '').trim();
+  if(!text) return;
   if(!('speechSynthesis' in window)) return;
+  await Promise.race([voicesReady(), new Promise(r => setTimeout(r, 400))]);
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text.trim());
+  // Agregar un punto final ayuda a que la voz lea la palabra completa con entonación
+  // natural en vez de cortarla de forma abrupta (típico de utterances muy cortas).
+  const spoken = /[.!?]$/.test(text) ? text : text + '.';
+  const utter = new SpeechSynthesisUtterance(spoken);
   const voice = pickBestEnglishVoice();
   if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = 'en-US'; }
-  utter.rate = 0.88;
+  utter.rate = 0.85;
   utter.pitch = 1;
+  utter.volume = 1;
   window.speechSynthesis.speak(utter);
 }
 
