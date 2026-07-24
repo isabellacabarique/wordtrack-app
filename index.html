@@ -711,14 +711,45 @@ function toggleLanguage(){
   setLanguage(currentLang === 'es' ? 'en' : 'es');
 }
 
-/* Lee en voz alta una palabra o expresión en inglés (usa la voz del navegador, sin costo) */
+/* Lee en voz alta una palabra o expresión en inglés (usa la voz del navegador, sin costo).
+   Elige a propósito una voz de buena calidad en vez de dejar la que el navegador
+   ponga por defecto (que a veces es una voz robótica de baja calidad). */
+let cachedVoices = [];
+if('speechSynthesis' in window){
+  const loadVoices = () => { cachedVoices = window.speechSynthesis.getVoices(); };
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickBestEnglishVoice(){
+  if(!cachedVoices.length) cachedVoices = window.speechSynthesis.getVoices();
+  const englishVoices = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+  if(!englishVoices.length) return null;
+  // Nombres de voces conocidas por sonar claras y naturales (Chrome/Android, iOS/Safari, Edge)
+  const preferredNames = [
+    'Google US English', 'Google UK English Female', 'Google UK English Male',
+    'Samantha', 'Ava', 'Karen',
+    'Microsoft Aria Online (Natural) - English (United States)',
+    'Microsoft Guy Online (Natural) - English (United States)',
+    'Microsoft Zira Desktop - English (United States)',
+  ];
+  for(const name of preferredNames){
+    const found = englishVoices.find(v => v.name === name);
+    if(found) return found;
+  }
+  const usVoice = englishVoices.find(v => v.lang === 'en-US');
+  return usVoice || englishVoices[0];
+}
+
 function speakWord(text){
   if(!text || !text.trim()) return;
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text.trim());
-  utter.lang = 'en-US';
-  utter.rate = 0.9;
+  const voice = pickBestEnglishVoice();
+  if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = 'en-US'; }
+  utter.rate = 0.88;
+  utter.pitch = 1;
   window.speechSynthesis.speak(utter);
 }
 
