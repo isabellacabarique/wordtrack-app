@@ -303,8 +303,12 @@
     <!-- AGREGAR -->
     <section class="screen" id="screen-agregar">
       <div class="card">
+        <div class="field-group">
+          <label class="field-label">Contexto (opcional)</label>
+          <input type="text" id="input-context" placeholder="Ej: Let's call it a day">
+        </div>
         <label class="field-label">inglés</label>
-        <input type="text" id="input-en" placeholder="Escribe una palabra..." oninput="onWordInput()">
+        <input type="text" id="input-en" placeholder="Escribe una palabra o expresión..." oninput="onWordInput()">
       </div>
 
       <div class="card" id="translation-card" style="display:none">
@@ -589,8 +593,9 @@ function onWordInput(){
 
 async function lookupWord(raw){
   const note = document.getElementById('unknown-note');
+  const context = document.getElementById('input-context').value.trim();
   try{
-    const { data, error } = await sb.functions.invoke('translate-word', { body: { word: raw } });
+    const { data, error } = await sb.functions.invoke('translate-word', { body: { word: raw, context: context || undefined } });
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
     lastLookup = { word: raw, es: data.es || '', examples: data.examples || [] };
     document.getElementById('translation-text').textContent = data.es || '(sin traducción)';
@@ -627,6 +632,7 @@ async function saveWord(){
   await loadUserData();
 
   document.getElementById('input-en').value='';
+  document.getElementById('input-context').value='';
   document.getElementById('input-own-example').value='';
   document.getElementById('translation-card').style.display='none';
   document.getElementById('own-example-card').style.display='none';
