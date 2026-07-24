@@ -1265,6 +1265,18 @@ async function renderHistoria(){
       <button class="btn secondary small" onclick="renderHistoria()">${t('btn_new_story')}</button>
     `;
     logActivity();
+
+    /* Leer la historia cuenta como una práctica para cada palabra guardada
+       que se usó en ella (una vez por palabra, aunque aparezca varias veces). */
+    if(Array.isArray(data.words_used)){
+      const seen = new Set();
+      for(const usedWord of data.words_used){
+        const lower = (usedWord || '').toLowerCase().trim();
+        if(!lower || seen.has(lower)) continue;
+        seen.add(lower);
+        bumpPracticeCount(usedWord);
+      }
+    }
   }catch(e){
     el.innerHTML = `
       <div class="empty-hint">${t('err_story')}</div>
