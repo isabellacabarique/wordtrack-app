@@ -230,7 +230,7 @@
   .qa-answer{ font-size:14px; line-height:1.6; }
   .fill-q{ margin-bottom:22px; }
   .fill-sentence{ font-size:16px; margin-bottom:10px; }
-  .fill-sentence .blank{ border-bottom:2px solid var(--blue); padding:0 4px; font-weight:700; color:var(--blue-dark); }
+  .fill-sentence .blank{ display:inline-block; min-width:60px; border-bottom:2px solid var(--blue); padding:0 4px; font-weight:700; color:var(--blue-dark); }
   .options{ display:flex; flex-wrap:wrap; gap:8px; }
   .option-btn{
     padding:8px 14px; border-radius:20px; border:2px solid var(--border); background:var(--card);
@@ -1442,7 +1442,7 @@ function paintOraciones(){
       q.matchedText = match[0];
       const before = q.sentence.slice(0, match.index);
       const after = q.sentence.slice(match.index + match[0].length);
-      sentenceHtml = `${wrapTapWords(before)}<span class="blank" id="blank-${i}">_____</span>${wrapTapWords(after)}`;
+      sentenceHtml = `${wrapTapWords(before)}<span class="blank" id="blank-${i}">&nbsp;</span>${wrapTapWords(after)}`;
     } else {
       q.matchedText = q.word;
       sentenceHtml = wrapTapWords(q.sentence);
