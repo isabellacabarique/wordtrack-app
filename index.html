@@ -118,6 +118,7 @@
   .pill.nueva{ background:#fdeee0; color:#c97324; }
   .pill.practicando{ background:var(--blue-tint); color:var(--blue-dark); }
   .pill.dominada{ background:#e2f6ea; color:#2f9c5c; }
+  .pill.hidden-pill{ background:#eceff1; color:#6b7785; }
   .subtabs{ display:flex; gap:8px; margin-bottom:16px; }
   .subtabs button{
     flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
@@ -410,8 +411,9 @@
     <!-- MI VOCABULARIO -->
     <section class="screen" id="screen-vocab">
       <h2 class="section-title" data-i18n="section_my_vocab">Mi vocabulario</h2>
-      <p class="note" style="margin:-4px 0 14px;" data-i18n="note_practice_recommendation">Recomendación: practica cada palabra mínimo 6 veces. Luego, la verás con menos frecuencia.</p>
+      <p class="note" style="margin:-4px 0 14px;" data-i18n="note_practice_recommendation">Recomendación: practica cada palabra mínimo 15 veces. Luego, la verás con menos frecuencia.</p>
       <button class="btn secondary small" id="refresh-old-words-btn" style="display:none; margin-bottom:12px;" onclick="refreshOldWords()" data-i18n="btn_refresh_old_words">Actualizar palabras anteriores</button>
+      <input type="text" id="vocab-search" oninput="renderVocab()" placeholder="Buscar palabra..." data-i18n-ph="ph_search_vocab" style="margin-bottom:12px;">
       <div class="card" id="vocab-list">
         <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
       </div>
@@ -550,6 +552,7 @@
     <div class="wp-translation" id="wp-translation" data-i18n="searching">Buscando…</div>
     <div class="wp-examples" id="wp-examples"></div>
     <button class="btn wp-save-btn" id="wp-save-btn" onclick="saveInlineWord()" style="display:none" data-i18n="btn_save_vocab">+ Guardar en mi vocabulario</button>
+    <button class="btn secondary wp-save-btn" id="wp-hide-btn" onclick="toggleHideWord()" style="display:none"></button>
   </div>
 
 </div>
@@ -594,7 +597,8 @@ const I18N = {
     note_not_english: 'Esto no parece estar en inglés. Escribe la palabra o expresión en inglés que quieres aprender.',
     note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
     section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
-    note_practice_recommendation: 'Recomendación: practica cada palabra mínimo 6 veces. Luego, la verás con menos frecuencia.',
+    ph_search_vocab: 'Buscar palabra...', empty_no_search_results: 'No se encontró ninguna palabra con ese texto.',
+    note_practice_recommendation: 'Recomendación: practica cada palabra mínimo 15 veces. Luego, la verás con menos frecuencia.',
     btn_refresh_old_words: '🔄 Actualizar palabras anteriores', refreshing_words: 'Actualizando…',
     practiced_prefix: 'Practicada',
     status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
@@ -632,6 +636,8 @@ const I18N = {
     btn_translate_selection: '🔍 Traducir selección',
     searching: 'Buscando…', btn_save_vocab: '+ Guardar en mi vocabulario',
     already_saved: '✓ Ya está en tu vocabulario', no_translation: '(sin traducción)',
+    btn_hide_word: 'Ya me la sé, no mostrar más', btn_unhide_word: 'Volver a mostrar en las prácticas',
+    label_hidden: 'Ya no se practica',
     btn_more_examples: 'Ver más ejemplos',
     err_translate: 'No se pudo traducir esta vez.', saving: 'Guardando…', err_save: 'No se pudo guardar', saved_check: '✓ Guardada',
     auth_sub: 'Guarda tu vocabulario y practica cuando quieras',
@@ -664,7 +670,8 @@ const I18N = {
     note_not_english: "This doesn't look like English. Type the English word or expression you want to learn.",
     note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
     section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
-    note_practice_recommendation: 'Recommendation: practice each word at least 6 times. After that, you\'ll see it less often.',
+    ph_search_vocab: 'Search for a word...', empty_no_search_results: 'No word found matching that text.',
+    note_practice_recommendation: 'Recommendation: practice each word at least 15 times. After that, you\'ll see it less often.',
     btn_refresh_old_words: '🔄 Update older words', refreshing_words: 'Updating…',
     practiced_prefix: 'Practiced',
     status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
@@ -702,6 +709,8 @@ const I18N = {
     btn_translate_selection: '🔍 Translate selection',
     searching: 'Searching…', btn_save_vocab: '+ Save to my vocabulary',
     already_saved: '✓ Already in your vocabulary', no_translation: '(no translation)',
+    btn_hide_word: "I already know it, stop showing it", btn_unhide_word: 'Show it in practice again',
+    label_hidden: 'No longer practiced',
     btn_more_examples: 'Show more examples',
     err_translate: "Couldn't translate this time.", saving: 'Saving…', err_save: "Couldn't save", saved_check: '✓ Saved',
     auth_sub: 'Save your vocabulary and practice whenever you want',
@@ -1082,23 +1091,39 @@ function renderInicio(){
 /* ---------- Mi vocabulario ---------- */
 function renderVocab(){
   const el = document.getElementById('vocab-list');
+  const searchInput = document.getElementById('vocab-search');
   const refreshBtn = document.getElementById('refresh-old-words-btn');
   const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
   if(refreshBtn){
     refreshBtn.style.display = (pendingRefresh.length > 0 && !refreshBtn.dataset.busy) ? 'block' : 'none';
   }
+  if(searchInput){
+    searchInput.style.display = words.length === 0 ? 'none' : 'block';
+  }
   if(words.length===0){
     el.innerHTML = `<div class="empty-hint">${t('empty_no_saved')}</div>`;
     return;
   }
-  const sorted = [...words].sort((a,b)=> b.date_added.localeCompare(a.date_added));
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const filtered = query
+    ? words.filter(w => w.en.toLowerCase().includes(query) || (w.es||'').toLowerCase().includes(query))
+    : words;
+  if(filtered.length === 0){
+    el.innerHTML = `<div class="empty-hint">${t('empty_no_search_results')}</div>`;
+    return;
+  }
+  const sorted = [...filtered].sort((a,b)=> {
+    if(!!a.hidden !== !!b.hidden) return a.hidden ? 1 : -1;
+    return b.date_added.localeCompare(a.date_added);
+  });
   el.innerHTML = sorted.map(w=>{
     const pc = w.practice_count || 0;
     return `
-    <div class="word-row" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
+    <div class="word-row" style="${w.hidden ? 'opacity:.55;' : ''}" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
       <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
       <div style="text-align:right;">
         <span class="pill ${w.status}">${statusLabel(w.status)}</span>
+        ${w.hidden ? `<div style="margin-top:4px;"><span class="pill hidden-pill">${t('label_hidden')}</span></div>` : ''}
         <div class="note" style="margin-top:4px;">${practiceLabel(pc)}</div>
       </div>
     </div>`;
@@ -1172,7 +1197,7 @@ function markClickableWords(text, wds){
 }
 
 function knownWords(){
-  return words.filter(w => w.examples && w.examples.length > 0);
+  return words.filter(w => w.examples && w.examples.length > 0 && !w.hidden);
 }
 
 /* ---------- Popup de traducción rápida: tocar una palabra o seleccionar una expresión ---------- */
@@ -1207,7 +1232,9 @@ async function openWordPopup(text, context){
   typeEl.textContent = ''; typeEl.style.display = 'none';
   phoneticEl.textContent = ''; phoneticEl.style.display = 'none';
   const saveBtn = document.getElementById('wp-save-btn');
+  const hideBtn = document.getElementById('wp-hide-btn');
   saveBtn.style.display = 'none';
+  hideBtn.style.display = 'none';
 
   const lower = text.toLowerCase();
   const already = words.find(w => w.en.toLowerCase() === lower);
@@ -1219,6 +1246,9 @@ async function openWordPopup(text, context){
     saveBtn.textContent = t('already_saved');
     saveBtn.disabled = true;
     saveBtn.style.display = 'block';
+    hideBtn.textContent = already.hidden ? t('btn_unhide_word') : t('btn_hide_word');
+    hideBtn.dataset.wordId = already.id;
+    hideBtn.style.display = 'block';
     return;
   }
 
@@ -1236,6 +1266,23 @@ async function openWordPopup(text, context){
   }catch(e){
     document.getElementById('wp-translation').textContent = t('err_translate');
   }
+}
+
+/* Marca/desmarca una palabra guardada como "ya me la sé": deja de aparecer
+   en las actividades de práctica, pero sigue visible en Mi vocabulario. */
+async function toggleHideWord(){
+  const hideBtn = document.getElementById('wp-hide-btn');
+  const id = hideBtn.dataset.wordId;
+  const w = words.find(x => String(x.id) === String(id));
+  if(!w) return;
+  const newHidden = !w.hidden;
+  hideBtn.disabled = true;
+  const { error } = await sb.from('words').update({ hidden: newHidden }).eq('id', w.id);
+  hideBtn.disabled = false;
+  if(error) return;
+  w.hidden = newHidden;
+  hideBtn.textContent = newHidden ? t('btn_unhide_word') : t('btn_hide_word');
+  renderVocab();
 }
 
 function closeWordPopup(){
@@ -1395,12 +1442,12 @@ async function completeStory(){
 }
 
 let quizState = null;
-/* Da prioridad a las palabras poco practicadas (practice_count < 6): tienen
-   3 veces más probabilidad de salir. Las que ya llegaron a 6 o más prácticas
+/* Da prioridad a las palabras poco practicadas (practice_count < 15): tienen
+   3 veces más probabilidad de salir. Las que ya llegaron a 15 o más prácticas
    NO se eliminan de la práctica, solo aparecen con menos frecuencia. */
 function pickPriorityWords(wds, n){
-  const priority = wds.filter(w => (w.practice_count||0) < 6);
-  const mastered = wds.filter(w => (w.practice_count||0) >= 6);
+  const priority = wds.filter(w => (w.practice_count||0) < 15);
+  const mastered = wds.filter(w => (w.practice_count||0) >= 15);
   const weighted = [];
   priority.forEach(w => { for(let i=0;i<3;i++) weighted.push(w); });
   mastered.forEach(w => weighted.push(w));
