@@ -410,6 +410,7 @@
     <!-- MI VOCABULARIO -->
     <section class="screen" id="screen-vocab">
       <h2 class="section-title" data-i18n="section_my_vocab">Mi vocabulario</h2>
+      <p class="note" style="margin:-4px 0 14px;" data-i18n="note_practice_recommendation">Recomendación: practica cada palabra mínimo 6 veces. Luego, la verás con menos frecuencia.</p>
       <button class="btn secondary small" id="refresh-old-words-btn" style="display:none; margin-bottom:12px;" onclick="refreshOldWords()" data-i18n="btn_refresh_old_words">Actualizar palabras anteriores</button>
       <div class="card" id="vocab-list">
         <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
@@ -592,6 +593,7 @@ const I18N = {
     note_not_english: 'Esto no parece estar en inglés. Escribe la palabra o expresión en inglés que quieres aprender.',
     note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
     section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
+    note_practice_recommendation: 'Recomendación: practica cada palabra mínimo 6 veces. Luego, la verás con menos frecuencia.',
     btn_refresh_old_words: '🔄 Actualizar palabras anteriores', refreshing_words: 'Actualizando…',
     practiced_prefix: 'Practicada',
     status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
@@ -660,6 +662,7 @@ const I18N = {
     note_not_english: "This doesn't look like English. Type the English word or expression you want to learn.",
     note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
     section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
+    note_practice_recommendation: 'Recommendation: practice each word at least 6 times. After that, you\'ll see it less often.',
     btn_refresh_old_words: '🔄 Update older words', refreshing_words: 'Updating…',
     practiced_prefix: 'Practiced',
     status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
@@ -1368,13 +1371,25 @@ async function renderHistoria(){
 }
 
 let quizState = null;
-/* Prioriza palabras poco practicadas (practice_count <= 6); las que ya superaron
-   6 prácticas solo se usan para completar el cupo si no alcanzan las demás. */
+/* Da prioridad a las palabras poco practicadas (practice_count < 6): tienen
+   3 veces más probabilidad de salir. Las que ya llegaron a 6 o más prácticas
+   NO se eliminan de la práctica, solo aparecen con menos frecuencia. */
 function pickPriorityWords(wds, n){
-  const shuffle = arr => [...arr].sort(()=>0.5-Math.random());
-  const priority = shuffle(wds.filter(w => (w.practice_count||0) <= 6));
-  const mastered = shuffle(wds.filter(w => (w.practice_count||0) > 6));
-  return [...priority, ...mastered].slice(0, n);
+  const priority = wds.filter(w => (w.practice_count||0) < 6);
+  const mastered = wds.filter(w => (w.practice_count||0) >= 6);
+  const weighted = [];
+  priority.forEach(w => { for(let i=0;i<3;i++) weighted.push(w); });
+  mastered.forEach(w => weighted.push(w));
+  const shuffled = weighted.sort(()=>0.5-Math.random());
+  const picked = [];
+  const seen = new Set();
+  for(const w of shuffled){
+    if(seen.has(w.id)) continue;
+    seen.add(w.id);
+    picked.push(w);
+    if(picked.length >= n) break;
+  }
+  return picked;
 }
 
 function renderOraciones(){
