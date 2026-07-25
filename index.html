@@ -410,6 +410,7 @@
     <!-- MI VOCABULARIO -->
     <section class="screen" id="screen-vocab">
       <h2 class="section-title" data-i18n="section_my_vocab">Mi vocabulario</h2>
+      <button class="btn secondary small" id="refresh-old-words-btn" style="display:none; margin-bottom:12px;" onclick="refreshOldWords()" data-i18n="btn_refresh_old_words">Actualizar palabras anteriores</button>
       <div class="card" id="vocab-list">
         <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
       </div>
@@ -591,6 +592,7 @@ const I18N = {
     note_not_english: 'Esto no parece estar en inglés. Escribe la palabra o expresión en inglés que quieres aprender.',
     note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
     section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
+    btn_refresh_old_words: '🔄 Actualizar palabras anteriores', refreshing_words: 'Actualizando…',
     practiced_prefix: 'Practicada',
     status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
     section_choose_practice: 'Elige cómo quieres practicar',
@@ -658,6 +660,7 @@ const I18N = {
     note_not_english: "This doesn't look like English. Type the English word or expression you want to learn.",
     note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
     section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
+    btn_refresh_old_words: '🔄 Update older words', refreshing_words: 'Updating…',
     practiced_prefix: 'Practiced',
     status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
     section_choose_practice: 'Choose how you want to practice',
@@ -1069,6 +1072,11 @@ function renderInicio(){
 /* ---------- Mi vocabulario ---------- */
 function renderVocab(){
   const el = document.getElementById('vocab-list');
+  const refreshBtn = document.getElementById('refresh-old-words-btn');
+  const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  if(refreshBtn){
+    refreshBtn.style.display = (pendingRefresh.length > 0 && !refreshBtn.dataset.busy) ? 'block' : 'none';
+  }
   if(words.length===0){
     el.innerHTML = `<div class="empty-hint">${t('empty_no_saved')}</div>`;
     return;
@@ -1085,6 +1093,40 @@ function renderVocab(){
       </div>
     </div>`;
   }).join('');
+}
+
+/* Vuelve a consultar la IA para las palabras guardadas antes de que existieran
+   el tipo de palabra, la fonética y los 6 ejemplos, para que también las
+   tengan (sin perder su practice_count, status ni ejemplo propio). */
+async function refreshOldWords(){
+  const btn = document.getElementById('refresh-old-words-btn');
+  const pending = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  if(pending.length === 0 || btn.dataset.busy) return;
+  btn.dataset.busy = '1';
+  btn.disabled = true;
+  for(let i=0; i<pending.length; i++){
+    const w = pending[i];
+    btn.textContent = `${t('refreshing_words')} (${i+1}/${pending.length})`;
+    try{
+      const { data, error } = await sb.functions.invoke('translate-word', { body: { word: w.en } });
+      if(!error && data && !data.error && data.status !== 'not_english' && data.status !== 'invalid'){
+        const updated = {
+          es: data.es || w.es,
+          examples: (data.examples && data.examples.length) ? data.examples : w.examples,
+          word_type: data.type || '',
+          phonetic: data.phonetic || ''
+        };
+        Object.assign(w, updated);
+        await sb.from('words').update(updated).eq('id', w.id);
+      }
+    }catch(e){
+      console.error('No se pudo actualizar la palabra', w.en, e);
+    }
+  }
+  btn.disabled = false;
+  btn.textContent = t('btn_refresh_old_words');
+  delete btn.dataset.busy;
+  renderVocab();
 }
 
 /* ---------- Juegos: menú de Practicar ---------- */
