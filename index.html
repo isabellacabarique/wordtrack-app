@@ -118,6 +118,19 @@
   .pill.nueva{ background:#fdeee0; color:#c97324; }
   .pill.practicando{ background:var(--blue-tint); color:var(--blue-dark); }
   .pill.dominada{ background:#e2f6ea; color:#2f9c5c; }
+  .level-pill{
+    font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700; cursor:pointer;
+    text-transform:uppercase; letter-spacing:.02em; border:none; font-family:inherit;
+  }
+  .level-pill.basica{ background:#eaf3de; color:#3b6d11; }
+  .level-pill.intermedia{ background:var(--blue-tint); color:var(--blue-dark); }
+  .level-pill.expresion{ background:#eee5f8; color:#6b3fa0; }
+  .level-pill.poco_comun{ background:#fdeee0; color:#c97324; }
+  .level-pill.avanzada{ background:#faece7; color:#993c1d; }
+  .level-pill.jerga{ background:#fbe4e4; color:#a32d2d; }
+  #level-info-modal .card{ text-align:left; }
+  #level-info-modal h3{ margin:0 0 8px; font-size:16px; }
+  #level-info-modal p{ font-size:14px; line-height:1.6; color:var(--text); margin:0 0 16px; }
   .subtabs{ display:flex; gap:8px; margin-bottom:16px; }
   .subtabs button{
     flex:1; padding:10px; border-radius:12px; border:2px solid var(--border); background:var(--card);
@@ -392,6 +405,7 @@
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px;">
           <div class="translation" id="translation-text">—</div>
           <span class="wp-type" id="translation-type" style="display:none"></span>
+          <span id="translation-level"></span>
         </div>
         <h2 class="section-title" style="margin-top:18px" data-i18n="section_examples">Ejemplos de uso</h2>
         <p class="note" style="margin:0 0 10px;" data-i18n="note_read_aloud">Recuerda leer los ejemplos en voz alta.</p>
@@ -529,6 +543,15 @@
     </div>
   </div>
 
+  <!-- Explicación de qué significa cada nivel de dificultad (Básica/Avanzada/Nativa) -->
+  <div id="level-info-modal" style="display:none; position:fixed; inset:0; background:rgba(20,40,70,0.45); z-index:22; align-items:flex-end; justify-content:center;" onclick="if(event.target===this) closeLevelInfo()">
+    <div class="card" style="width:100%; max-width:480px; border-radius:24px 24px 0 0; margin:0;">
+      <h3 id="level-info-title">—</h3>
+      <p id="level-info-text">—</p>
+      <button class="btn secondary" onclick="closeLevelInfo()" data-i18n="btn_understood">Entendido</button>
+    </div>
+  </div>
+
   <!-- Botón flotante: aparece cuando el estudiante selecciona/subraya una expresión en la historia -->
   <button id="translate-selection-btn" data-i18n="btn_translate_selection">🔍 Traducir selección</button>
 
@@ -539,6 +562,7 @@
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <div class="wp-word" id="wp-word">—</div>
         <span class="wp-type" id="wp-type" style="display:none"></span>
+        <span id="wp-level"></span>
       </div>
       <button class="wp-close" onclick="closeWordPopup()">✕</button>
     </div>
@@ -615,6 +639,14 @@ const I18N = {
     note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
     btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
     btn_mark_complete: 'Marcar como completado', marking_complete: 'Marcando…', btn_completed_check: '✓ Completado',
+    level_basica: 'Básica', level_intermedia: 'Intermedia', level_expresion: 'Expresión', level_poco_comun: 'Poco común',
+    level_avanzada: 'Avanzada', level_jerga: 'Jerga',
+    level_info_basica: 'Es una palabra muy frecuente: la vas a encontrar una y otra vez en muchos contextos distintos. Es de las que sí o sí debes aprender primero.',
+    level_info_intermedia: 'Es una palabra común y útil, pero no de las primerísimas que se enseñan — ya requiere un poco más de vocabulario para usarla con naturalidad.',
+    level_info_expresion: 'Es una expresión o combinación de palabras que se aprende como un bloque completo — su significado no se entiende traduciendo cada palabra por separado.',
+    level_info_poco_comun: 'Es inglés normal y correcto, pero no aparece muy seguido en el día a día. Ni básica ni realmente avanzada.',
+    level_info_avanzada: 'Es una palabra formal, sofisticada o técnica de un campo específico (leyes, medicina, negocios, etc.). Útil, pero no es prioridad antes que las básicas.',
+    level_info_jerga: 'Es una expresión coloquial, de jerga, informal o vulgar que usan principalmente los hablantes nativos entre ellos. No es prioridad para empezar, pero te ayuda a entender conversaciones reales.',
     note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
     generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
     note_rol_words: 'Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.',
@@ -685,6 +717,14 @@ const I18N = {
     note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
     btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
     btn_mark_complete: 'Mark as complete', marking_complete: 'Marking…', btn_completed_check: '✓ Completed',
+    level_basica: 'Basic', level_intermedia: 'Intermediate', level_expresion: 'Expression', level_poco_comun: 'Uncommon',
+    level_avanzada: 'Advanced', level_jerga: 'Slang',
+    level_info_basica: "This word is very common — you'll run into it again and again in many different contexts. It's one of the ones you should learn first.",
+    level_info_intermedia: "This word is common and useful, but not one of the very first words taught — it takes a bit more vocabulary to use it naturally.",
+    level_info_expresion: "This is an expression or word combination you learn as a whole — its meaning isn't clear from translating each word separately.",
+    level_info_poco_comun: "This is normal, correct English, but it doesn't come up very often in everyday life. Neither basic nor really advanced.",
+    level_info_avanzada: "This is a formal, sophisticated, or technical word from a specific field (law, medicine, business, etc.). Useful, but not a priority over basic words.",
+    level_info_jerga: "This is a colloquial, slang, informal, or vulgar expression mostly used between native speakers. It's not a priority to start with, but it helps you understand real conversations.",
     note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
     generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
     note_rol_words: "The bold words are the ones you saved. Tap them if you don't remember their meaning.",
@@ -721,6 +761,36 @@ let currentLang = localStorage.getItem('wt_lang') || 'es';
 function t(key){
   const dict = I18N[currentLang] || I18N.es;
   return (key in dict) ? dict[key] : (I18N.es[key] || key);
+}
+
+/* Convierte el nivel de dificultad (1-5) de una palabra en su categoría:
+   1 básica, 2 intermedia, 3 poco común, 4 avanzada, 5 jerga. */
+function levelTier(level){
+  const n = Number(level) || 0;
+  if(n <= 0) return null;
+  if(n === 1) return 'basica';
+  if(n === 2) return 'intermedia';
+  if(n === 3) return 'expresion';
+  if(n === 4) return 'poco_comun';
+  if(n === 5) return 'avanzada';
+  return 'jerga';
+}
+
+/* Arma la etiqueta tocable de dificultad para mostrar junto a una palabra. */
+function levelPillHtml(level){
+  const tier = levelTier(level);
+  if(!tier) return '';
+  return `<span class="level-pill ${tier}" onclick="event.stopPropagation(); showLevelInfo('${tier}')">${t('level_'+tier)}</span>`;
+}
+
+function showLevelInfo(tier){
+  document.getElementById('level-info-title').textContent = t('level_'+tier);
+  document.getElementById('level-info-text').textContent = t('level_info_'+tier);
+  document.getElementById('level-info-modal').style.display = 'flex';
+}
+
+function closeLevelInfo(){
+  document.getElementById('level-info-modal').style.display = 'none';
 }
 
 function practiceLabel(n){
@@ -945,7 +1015,7 @@ function renderExamplesHtml(examples, wrap, limit){
 
 /* ---------- Agregar palabra (traducción real generada por IA) ---------- */
 let searchTimeout = null;
-let lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '' };
+let lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '', level: 0 };
 
 function onWordInput(){
   const raw = document.getElementById('input-en').value.trim().toLowerCase();
@@ -961,6 +1031,7 @@ function onWordInput(){
   document.getElementById('examples-list').innerHTML = '';
   document.getElementById('translation-type').style.display = 'none';
   document.getElementById('translation-phonetic').style.display = 'none';
+  document.getElementById('translation-level').innerHTML = '';
   tCard.style.display = 'block';
   note.style.display = 'none';
 
@@ -977,7 +1048,7 @@ async function lookupWord(raw){
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
 
     if(data.status === 'not_english' || data.status === 'invalid'){
-      lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '' };
+      lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', level: 0 };
       document.getElementById('translation-card').style.display = 'none';
       document.getElementById('own-example-card').style.display = 'none';
       document.getElementById('btn-guardar').style.display = 'none';
@@ -986,14 +1057,15 @@ async function lookupWord(raw){
       return;
     }
 
-    lastLookup = { word: raw, es: data.es || '', examples: data.examples || [], type: data.type || '', phonetic: data.phonetic || '' };
+    lastLookup = { word: raw, es: data.es || '', examples: data.examples || [], type: data.type || '', phonetic: data.phonetic || '', level: data.level || 0 };
     document.getElementById('translation-text').textContent = data.es || t('no_translation');
     document.getElementById('examples-list').innerHTML = renderExamplesHtml(data.examples, true);
     if(data.type){ typeEl.textContent = data.type; typeEl.style.display = 'inline-block'; }
     if(data.phonetic){ phoneticEl.textContent = data.phonetic; phoneticEl.style.display = 'block'; }
+    document.getElementById('translation-level').innerHTML = levelPillHtml(data.level);
     note.style.display = 'none';
   }catch(e){
-    lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '' };
+    lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', level: 0 };
     document.getElementById('translation-text').textContent = t('write_below');
     document.getElementById('examples-list').innerHTML = '';
     note.textContent = t('note_unknown');
@@ -1016,6 +1088,7 @@ async function saveWord(){
     examples: useLookup ? lastLookup.examples : [],
     word_type: useLookup ? lastLookup.type : '',
     phonetic: useLookup ? lastLookup.phonetic : '',
+    level: useLookup ? lastLookup.level : 0,
     own_example: ownExample,
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
@@ -1032,7 +1105,7 @@ async function saveWord(){
   document.getElementById('own-example-card').style.display='none';
   document.getElementById('btn-guardar').style.display='none';
   document.getElementById('unknown-note').style.display='none';
-  lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '' };
+  lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '', level: 0 };
 
   goTo('vocab');
 }
@@ -1069,7 +1142,10 @@ function renderInicio(){
     recentEl.innerHTML = recent.map(w=>`
       <div class="word-row" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
         <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
-        <span class="pill ${w.status}">${statusLabel(w.status)}</span>
+        <div style="text-align:right;">
+          <span class="pill ${w.status}">${statusLabel(w.status)}</span>
+          ${levelPillHtml(w.level) ? `<div style="margin-top:4px;">${levelPillHtml(w.level)}</div>` : ''}
+        </div>
       </div>`).join('');
   }
 }
@@ -1078,7 +1154,7 @@ function renderInicio(){
 function renderVocab(){
   const el = document.getElementById('vocab-list');
   const refreshBtn = document.getElementById('refresh-old-words-btn');
-  const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.level || !w.examples || w.examples.length < 4);
   if(refreshBtn){
     refreshBtn.style.display = (pendingRefresh.length > 0 && !refreshBtn.dataset.busy) ? 'block' : 'none';
   }
@@ -1094,6 +1170,7 @@ function renderVocab(){
       <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
       <div style="text-align:right;">
         <span class="pill ${w.status}">${statusLabel(w.status)}</span>
+        ${levelPillHtml(w.level) ? `<div style="margin-top:4px;">${levelPillHtml(w.level)}</div>` : ''}
         <div class="note" style="margin-top:4px;">${practiceLabel(pc)}</div>
       </div>
     </div>`;
@@ -1105,7 +1182,7 @@ function renderVocab(){
    tengan (sin perder su practice_count, status ni ejemplo propio). */
 async function refreshOldWords(){
   const btn = document.getElementById('refresh-old-words-btn');
-  const pending = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  const pending = words.filter(w => !w.word_type || !w.phonetic || !w.level || !w.examples || w.examples.length < 4);
   if(pending.length === 0 || btn.dataset.busy) return;
   btn.dataset.busy = '1';
   btn.disabled = true;
@@ -1119,7 +1196,8 @@ async function refreshOldWords(){
           es: data.es || w.es,
           examples: (data.examples && data.examples.length) ? data.examples : w.examples,
           word_type: data.type || '',
-          phonetic: data.phonetic || ''
+          phonetic: data.phonetic || '',
+          level: data.level || w.level || 0
         };
         Object.assign(w, updated);
         await sb.from('words').update(updated).eq('id', w.id);
@@ -1197,10 +1275,12 @@ async function openWordPopup(text, context){
   const examplesEl = document.getElementById('wp-examples');
   const typeEl = document.getElementById('wp-type');
   const phoneticEl = document.getElementById('wp-phonetic');
+  const levelEl = document.getElementById('wp-level');
   examplesEl.innerHTML = '';
   examplesEl.style.display = 'block';
   typeEl.textContent = ''; typeEl.style.display = 'none';
   phoneticEl.textContent = ''; phoneticEl.style.display = 'none';
+  levelEl.innerHTML = '';
   const saveBtn = document.getElementById('wp-save-btn');
   saveBtn.style.display = 'none';
 
@@ -1211,6 +1291,7 @@ async function openWordPopup(text, context){
     examplesEl.innerHTML = renderExamplesHtml(already.examples, false);
     if(already.word_type){ typeEl.textContent = already.word_type; typeEl.style.display = 'inline-block'; }
     if(already.phonetic){ phoneticEl.textContent = already.phonetic; phoneticEl.style.display = 'block'; }
+    levelEl.innerHTML = levelPillHtml(already.level);
     saveBtn.textContent = t('already_saved');
     saveBtn.disabled = true;
     saveBtn.style.display = 'block';
@@ -1225,6 +1306,7 @@ async function openWordPopup(text, context){
     examplesEl.innerHTML = renderExamplesHtml(data.examples, false);
     if(data.type){ typeEl.textContent = data.type; typeEl.style.display = 'inline-block'; }
     if(data.phonetic){ phoneticEl.textContent = data.phonetic; phoneticEl.style.display = 'block'; }
+    levelEl.innerHTML = levelPillHtml(data.level);
     saveBtn.textContent = t('btn_save_vocab');
     saveBtn.disabled = false;
     saveBtn.style.display = 'block';
@@ -1290,6 +1372,7 @@ async function saveInlineWord(){
     examples: data.examples || [],
     word_type: data.type || '',
     phonetic: data.phonetic || '',
+    level: data.level || 0,
     own_example: '',
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
