@@ -614,6 +614,7 @@ const I18N = {
     generating_story: '✍️ Generando tu historia…',
     note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
     btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
+    btn_mark_complete: '✅ Marcar como completado', marking_complete: 'Marcando…', btn_completed_check: '✓ Completado',
     note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
     generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
     note_rol_words: 'Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.',
@@ -683,6 +684,7 @@ const I18N = {
     generating_story: '✍️ Generating your story…',
     note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
     btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
+    btn_mark_complete: '✅ Mark as complete', marking_complete: 'Marking…', btn_completed_check: '✓ Completed',
     note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
     generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
     note_rol_words: "The bold words are the ones you saved. Tap them if you don't remember their meaning.",
@@ -1065,8 +1067,8 @@ function renderInicio(){
   } else {
     const recent = [...words].sort((a,b)=> b.date_added.localeCompare(a.date_added)).slice(0,5);
     recentEl.innerHTML = recent.map(w=>`
-      <div class="word-row">
-        <div><div class="en">${w.en} <button class="speak-btn small" onclick="speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
+      <div class="word-row" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
+        <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
         <span class="pill ${w.status}">${statusLabel(w.status)}</span>
       </div>`).join('');
   }
@@ -1321,6 +1323,12 @@ function toSentenceCaseTitle(str){
   return out;
 }
 
+/* Palabras usadas en la historia actualmente mostrada, pendientes de marcar
+   como completadas. Solo cuando el estudiante da clic en "Marcar como
+   completado" se suman a su conteo de práctica — así, si genera varias
+   historias antes de quedarse con una, las que no leyó no cuentan. */
+let currentStoryWords = [];
+
 async function renderHistoria(){
   const el = document.getElementById('historia-content');
   const wds = knownWords();
@@ -1329,6 +1337,7 @@ async function renderHistoria(){
     return;
   }
   el.innerHTML = `<div class="empty-hint">${t('generating_story')}</div>`;
+  currentStoryWords = [];
 
   try{
     const { data, error } = await sb.functions.invoke('generate-story', {
@@ -1343,31 +1352,41 @@ async function renderHistoria(){
       ? `<h3 class="story-title" onclick="openWordPopup('${storyTitle.replace(/'/g, "\\'")}')">${storyTitle}</h3>`
       : '';
 
+    currentStoryWords = Array.isArray(data.words_used) ? data.words_used.filter(Boolean) : [];
+
     el.innerHTML = `
       ${titleHtml}
       ${html}
       <p class="note">${t('note_story_words')}</p>
-      <button class="btn secondary small" onclick="renderHistoria()">${t('btn_new_story')}</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        <button class="btn small" id="btn-complete-story" onclick="completeStory()">${t('btn_mark_complete')}</button>
+        <button class="btn secondary small" id="btn-new-story" style="display:none" onclick="renderHistoria()">${t('btn_new_story')}</button>
+      </div>
     `;
     logActivity();
-
-    /* Leer la historia cuenta como una práctica para cada palabra guardada
-       que se usó en ella (una vez por palabra, aunque aparezca varias veces). */
-    if(Array.isArray(data.words_used)){
-      const seen = new Set();
-      for(const usedWord of data.words_used){
-        const lower = (usedWord || '').toLowerCase().trim();
-        if(!lower || seen.has(lower)) continue;
-        seen.add(lower);
-        bumpPracticeCount(usedWord);
-      }
-    }
   }catch(e){
     el.innerHTML = `
       <div class="empty-hint">${t('err_story')}</div>
       <button class="btn secondary small" onclick="renderHistoria()">${t('btn_retry')}</button>
     `;
   }
+}
+
+async function completeStory(){
+  const btn = document.getElementById('btn-complete-story');
+  if(!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = t('marking_complete');
+  const seen = new Set();
+  for(const usedWord of currentStoryWords){
+    const lower = (usedWord || '').toLowerCase().trim();
+    if(!lower || seen.has(lower)) continue;
+    seen.add(lower);
+    await bumpPracticeCount(usedWord);
+  }
+  btn.textContent = t('btn_completed_check');
+  const newBtn = document.getElementById('btn-new-story');
+  if(newBtn) newBtn.style.display = 'inline-block';
 }
 
 let quizState = null;
@@ -1519,6 +1538,27 @@ async function askVocab(){
 }
 
 /* ---------- Juego de rol ---------- */
+/* Extrae, sin repetir, todas las palabras marcadas con **doble asterisco**
+   en las líneas de un diálogo de juego de rol. */
+function extractAllMarkedWords(lines){
+  const found = [];
+  const seen = new Set();
+  for(const l of lines){
+    const matches = (l.text || '').match(/\*\*(.+?)\*\*/g) || [];
+    for(const m of matches){
+      const word = m.slice(2, -2);
+      const lower = word.toLowerCase();
+      if(!seen.has(lower)){ seen.add(lower); found.push(word); }
+    }
+  }
+  return found;
+}
+
+/* Palabras de la conversación actual, pendientes de marcar como completadas
+   (igual que en Historia: solo cuentan como práctica si el estudiante
+   confirma que terminó de leerla). */
+let currentRolWords = [];
+
 async function renderRol(){
   const el = document.getElementById('rol-content');
   const wds = knownWords();
@@ -1527,6 +1567,7 @@ async function renderRol(){
     return;
   }
   el.innerHTML = `<div class="empty-hint">${t('generating_conv')}</div>`;
+  currentRolWords = [];
 
   try{
     const { data, error } = await sb.functions.invoke('generate-roleplay', {
@@ -1547,10 +1588,15 @@ async function renderRol(){
         </div>`;
     }).join('');
 
+    currentRolWords = extractAllMarkedWords(data.lines);
+
     el.innerHTML = `
       ${html}
       <p class="note" style="margin-top:14px;">${t('note_rol_words')}</p>
-      <button class="btn secondary small" onclick="renderRol()">${t('btn_new_conv')}</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        <button class="btn small" id="btn-complete-rol" onclick="completeRol()">${t('btn_mark_complete')}</button>
+        <button class="btn secondary small" id="btn-new-conv" style="display:none" onclick="renderRol()">${t('btn_new_conv')}</button>
+      </div>
     `;
     logActivity();
   }catch(e){
@@ -1559,6 +1605,23 @@ async function renderRol(){
       <button class="btn secondary small" onclick="renderRol()">${t('btn_retry')}</button>
     `;
   }
+}
+
+async function completeRol(){
+  const btn = document.getElementById('btn-complete-rol');
+  if(!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = t('marking_complete');
+  const seen = new Set();
+  for(const usedWord of currentRolWords){
+    const lower = (usedWord || '').toLowerCase().trim();
+    if(!lower || seen.has(lower)) continue;
+    seen.add(lower);
+    await bumpPracticeCount(usedWord);
+  }
+  btn.textContent = t('btn_completed_check');
+  const newBtn = document.getElementById('btn-new-conv');
+  if(newBtn) newBtn.style.display = 'inline-block';
 }
 
 /* ---------- Comprensión ---------- */
