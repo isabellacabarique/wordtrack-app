@@ -1193,7 +1193,10 @@ function closeWordPopup(){
   inlineWordCurrentKey = null;
 }
 
-/* Selección de expresiones completas (varias palabras) dentro de la historia */
+/* Selección de expresiones completas (varias palabras) en cualquier parte de
+   la app (historia, oraciones de completar, preguntas de comprensión, el
+   chat de Preguntar, el juego de rol, los ejemplos al agregar una palabra,
+   etc.) — no solo palabra por palabra, sino frases completas con su contexto. */
 function setupStorySelection(){
   const showBtn = () => {
     const sel = window.getSelection();
@@ -1201,16 +1204,21 @@ function setupStorySelection(){
     const btn = document.getElementById('translate-selection-btn');
     if(!text || text.length < 2 || !sel.rangeCount){ btn.style.display = 'none'; return; }
     const anchorEl = sel.anchorNode && sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
-    const storyEl = anchorEl && anchorEl.closest && anchorEl.closest('.story-text');
-    if(!storyEl){ btn.style.display = 'none'; return; }
+    if(!anchorEl || !anchorEl.closest){ btn.style.display = 'none'; return; }
+    // Solo dentro del contenido de la app, y nunca en campos de texto, botones o el popup mismo
+    const insideApp = anchorEl.closest('#app-content');
+    const blockedArea = anchorEl.closest('input, textarea, button, #word-popup, #word-popup-overlay');
+    if(!insideApp || blockedArea){ btn.style.display = 'none'; return; }
     const rect = sel.getRangeAt(0).getBoundingClientRect();
     if(rect.width === 0 && rect.height === 0){ btn.style.display = 'none'; return; }
+    // Usa el bloque de texto más cercano (párrafo, burbuja de chat, oración, etc.) como contexto
+    const contextEl = anchorEl.closest('.story-text, .story-title, .chat-bubble, .fill-sentence, .qa-answer, .qa-question, .example-chip, .translation, p, li, td') || anchorEl;
     btn.style.display = 'block';
     btn.style.top = (rect.top + window.scrollY - 44) + 'px';
     btn.style.left = Math.max(10, rect.left + window.scrollX) + 'px';
     btn.onclick = () => {
       btn.style.display = 'none';
-      const context = storyEl.textContent.trim();
+      const context = contextEl.textContent.trim();
       sel.removeAllRanges();
       openWordPopup(text, context);
     };
