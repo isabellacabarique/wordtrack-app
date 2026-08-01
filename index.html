@@ -417,6 +417,9 @@
       <div class="card" id="vocab-list">
         <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
       </div>
+      <div style="text-align:center; margin-top:40px;">
+        <button onclick="openResetLanguageModal()" style="background:none; border:none; padding:4px; color:#c7ccd1; font-size:10px; font-family:inherit; cursor:pointer;" data-i18n="link_reset_language">Cambiar de idioma</button>
+      </div>
     </section>
 
     <!-- PRACTICAR -->
@@ -545,7 +548,16 @@
     </div>
   </div>
 
-  <!-- Explicación de qué significa cada nivel de dificultad (Básica/Avanzada/Nativa) -->
+  <!-- Confirmación para borrar todo el vocabulario y poder empezar de nuevo en otro idioma -->
+  <div id="reset-language-modal" style="display:none; position:fixed; inset:0; background:rgba(20,40,70,0.45); z-index:23; align-items:flex-end; justify-content:center;" onclick="if(event.target===this) closeResetLanguageModal()">
+    <div class="card" style="width:100%; max-width:480px; border-radius:24px 24px 0 0; margin:0;">
+      <div style="font-weight:700; font-size:16px; margin-bottom:10px;" data-i18n="reset_lang_title">Cambiar de idioma</div>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;" data-i18n="reset_lang_body">Esto va a borrar TODAS tus palabras guardadas y tu progreso, para que puedas empezar de nuevo aprendiendo otro idioma. Esta acción no se puede deshacer.</p>
+      <button class="btn" style="background:#c0392b;" onclick="confirmResetLanguage()" id="reset-lang-confirm-btn" data-i18n="reset_lang_confirm">Sí, borrar todo y empezar de nuevo</button>
+      <button class="btn secondary" style="margin-top:10px;" onclick="closeResetLanguageModal()" data-i18n="btn_cancel">Cancelar</button>
+    </div>
+  </div>
+
   <!-- Botón flotante: aparece cuando el estudiante selecciona/subraya una expresión en la historia -->
   <button id="translate-selection-btn" data-i18n="btn_translate_selection">🔍 Traducir selección</button>
 
@@ -614,6 +626,9 @@ const I18N = {
     ph_search_vocab: 'Buscar palabra...', empty_no_search_results: 'No se encontró ninguna palabra con ese texto.',
     note_practice_recommendation: 'Recomendación: practica cada palabra mínimo 15 veces. Luego, la verás con menos frecuencia.',
     btn_refresh_old_words: '🔄 Actualizar palabras anteriores', refreshing_words: 'Actualizando…',
+    link_reset_language: 'Cambiar de idioma', reset_lang_title: 'Cambiar de idioma',
+    reset_lang_body: 'Esto va a borrar TODAS tus palabras guardadas y tu progreso, para que puedas empezar de nuevo aprendiendo otro idioma. Esta acción no se puede deshacer.',
+    reset_lang_confirm: 'Sí, borrar todo y empezar de nuevo', btn_cancel: 'Cancelar', deleting_words: 'Borrando…',
     practiced_prefix: 'Practicada',
     status_nueva: 'nueva', status_practicando: 'practicando', status_dominada: 'dominada',
     section_choose_practice: 'Elige cómo quieres practicar',
@@ -693,6 +708,9 @@ const I18N = {
     ph_search_vocab: 'Search for a word...', empty_no_search_results: 'No word found matching that text.',
     note_practice_recommendation: 'Recommendation: practice each word at least 15 times. After that, you\'ll see it less often.',
     btn_refresh_old_words: '🔄 Update older words', refreshing_words: 'Updating…',
+    link_reset_language: 'Change language', reset_lang_title: 'Change language',
+    reset_lang_body: 'This will delete ALL your saved words and progress, so you can start over learning a different language. This cannot be undone.',
+    reset_lang_confirm: 'Yes, delete everything and start over', btn_cancel: 'Cancel', deleting_words: 'Deleting…',
     practiced_prefix: 'Practiced',
     status_nueva: 'new', status_practicando: 'in progress', status_dominada: 'mastered',
     section_choose_practice: 'Choose how you want to practice',
@@ -1214,6 +1232,31 @@ async function refreshOldWords(){
   btn.textContent = t('btn_refresh_old_words');
   delete btn.dataset.busy;
   renderVocab();
+}
+
+/* Opción escondida (texto pequeño al final de Mi vocabulario) para borrar todo
+   el vocabulario guardado y poder empezar de nuevo en otro idioma, ya que cada
+   cuenta solo puede tener palabras de un idioma a la vez. */
+function openResetLanguageModal(){
+  document.getElementById('reset-language-modal').style.display = 'flex';
+}
+
+function closeResetLanguageModal(){
+  document.getElementById('reset-language-modal').style.display = 'none';
+}
+
+async function confirmResetLanguage(){
+  if(!currentUser) return;
+  const btn = document.getElementById('reset-lang-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = t('deleting_words');
+  const { error } = await sb.from('words').delete().eq('user_id', currentUser.id);
+  btn.disabled = false;
+  btn.textContent = t('reset_lang_confirm');
+  if(error){ alert(t('err_save_word') + error.message); return; }
+  await loadUserData();
+  closeResetLanguageModal();
+  goTo('agregar');
 }
 
 /* ---------- Juegos: menú de Practicar ---------- */
