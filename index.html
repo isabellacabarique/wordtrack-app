@@ -1936,7 +1936,7 @@ function paintConversacion(){
     <div class="chat-row a">
       <div class="chat-col">
         <div class="chat-speaker">AI</div>
-        <div class="chat-bubble">${turn.question} <button class="speak-btn small" onclick="speakWord('${turn.question.replace(/'/g,"\\'")}')">🔊</button></div>
+        <div class="chat-bubble">${wrapTapWords(turn.question)} <button class="speak-btn small" onclick="speakWord('${turn.question.replace(/'/g,"\\'")}')">🔊</button></div>
       </div>
     </div>
     <div id="conv-answer-area" style="margin-top:14px;">
