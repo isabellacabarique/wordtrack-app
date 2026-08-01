@@ -386,7 +386,7 @@
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <label class="field-label" style="margin:0;" data-i18n="label_translation">español</label>
           <div style="text-align:right;">
-            <button class="speak-btn" onclick="speakWord(document.getElementById('input-en').value)" data-i18n="btn_listen">🔊 Escuchar</button>
+            <button class="speak-btn" onclick="speakWord(document.getElementById('input-en').value, lastLookup.language)" data-i18n="btn_listen">🔊 Escuchar</button>
             <div class="wp-phonetic" id="translation-phonetic" style="display:none"></div>
           </div>
         </div>
@@ -460,6 +460,13 @@
               <div class="menu-desc" data-i18n="menu_comprension_desc">Responde si entendiste el mensaje completo</div>
             </div>
           </button>
+          <button class="menu-card" onclick="openGame('conversacion')">
+            <div class="menu-icon">🗣️</div>
+            <div>
+              <div class="menu-title" data-i18n="menu_conversacion_title">Conversación</div>
+              <div class="menu-desc" data-i18n="menu_conversacion_desc">Responde preguntas usando tus palabras</div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -509,6 +516,13 @@
         </div>
       </div>
 
+      <div id="game-conversacion" class="game-panel" style="display:none">
+        <button class="back-btn" onclick="closeGame()" data-i18n="back_btn">← Volver</button>
+        <div class="card" id="conversacion-content">
+          <div class="empty-hint" data-i18n="empty_conversacion">Guarda al menos 3 palabras con traducción para practicar conversación.</div>
+        </div>
+      </div>
+
     </section>
 
   </main>
@@ -546,7 +560,7 @@
       <button class="wp-close" onclick="closeWordPopup()">✕</button>
     </div>
     <div class="wp-audio-row">
-      <button class="speak-btn" onclick="speakWord(document.getElementById('wp-word').textContent)">🔊</button>
+      <button class="speak-btn" onclick="speakWord(document.getElementById('wp-word').textContent, wpCurrentLang)">🔊</button>
     </div>
     <div class="wp-phonetic" id="wp-phonetic" style="display:none"></div>
     <div class="wp-translation" id="wp-translation" data-i18n="searching">Buscando…</div>
@@ -594,7 +608,7 @@ const I18N = {
     section_examples: 'Ejemplos de uso', note_read_aloud: 'Recuerda leer los ejemplos en voz alta.',
     label_own_example: 'Escribe tu propio ejemplo (en inglés)', btn_save: 'Guardar',
     note_unknown: 'No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.',
-    note_not_english: 'Esto no parece estar en inglés. Escribe la palabra o expresión en inglés que quieres aprender.',
+    note_not_english: 'Esto no parece ser una palabra o expresión válida en el idioma que estás aprendiendo.',
     note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
     section_my_vocab: 'Mi vocabulario', empty_no_saved: 'Aún no hay palabras guardadas.',
     ph_search_vocab: 'Buscar palabra...', empty_no_search_results: 'No se encontró ninguna palabra con ese texto.',
@@ -608,6 +622,7 @@ const I18N = {
     menu_preguntar_title: 'Preguntar', menu_preguntar_desc: 'Haz preguntas sobre cualquier palabra guardada',
     menu_rol_title: 'Juego de rol', menu_rol_desc: 'Lee una conversación natural entre dos personas',
     menu_comprension_title: 'Comprensión', menu_comprension_desc: 'Responde si entendiste el mensaje completo',
+    menu_conversacion_title: 'Conversación', menu_conversacion_desc: 'Responde preguntas usando tus palabras',
     back_btn: '← Volver',
     empty_historia: 'Guarda al menos 3 palabras con traducción para generar una historia.',
     empty_oraciones: 'Guarda al menos 4 palabras con traducción para jugar.',
@@ -627,6 +642,11 @@ const I18N = {
     generating_questions: '🧠 Generando preguntas…',
     select_best_option: 'Selecciona la opción que mejor resume la oración:',
     btn_new_round2: '🔄 Nueva ronda', err_questions: 'No se pudieron generar las preguntas esta vez.',
+    empty_conversacion: 'Guarda al menos 3 palabras con traducción para practicar conversación.',
+    generating_conversation: '🗣️ Preparando preguntas…', err_conversation: 'No se pudo generar la conversación esta vez.',
+    ph_conv_answer: 'Escribe tu respuesta en inglés...', btn_send_answer: 'Enviar respuesta',
+    checking_answer: 'Revisando…', btn_next_turn: 'Siguiente', turn_label: 'Turno', turn_of: 'de',
+    you_label: 'Tú', example_label: 'Ejemplo', note_conv_used_well: 'palabras usadas correctamente',
     nav_inicio: 'Inicio', nav_agregar: 'Agregar', nav_vocab: 'Vocabulario', nav_practicar: 'Practicar',
     ios_title: 'Instalar en iPhone',
     ios_step1: '1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.',
@@ -667,7 +687,7 @@ const I18N = {
     section_examples: 'Example sentences', note_read_aloud: 'Remember to read the examples out loud.',
     label_own_example: 'Write your own example (in English)', btn_save: 'Save',
     note_unknown: "We couldn't generate the translation automatically. You can write it yourself in the example below and save anyway.",
-    note_not_english: "This doesn't look like English. Type the English word or expression you want to learn.",
+    note_not_english: "This doesn't look like a valid word or expression in the language you're learning.",
     note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
     section_my_vocab: 'My vocabulary', empty_no_saved: 'No words saved yet.',
     ph_search_vocab: 'Search for a word...', empty_no_search_results: 'No word found matching that text.',
@@ -681,6 +701,7 @@ const I18N = {
     menu_preguntar_title: 'Ask', menu_preguntar_desc: 'Ask questions about any saved word',
     menu_rol_title: 'Roleplay', menu_rol_desc: 'Read a natural conversation between two people',
     menu_comprension_title: 'Comprehension', menu_comprension_desc: 'Answer to check if you understood the full message',
+    menu_conversacion_title: 'Conversation', menu_conversacion_desc: 'Answer questions using your words',
     back_btn: '← Back',
     empty_historia: 'Save at least 3 words with a translation to generate a story.',
     empty_oraciones: 'Save at least 4 words with a translation to play.',
@@ -700,6 +721,11 @@ const I18N = {
     generating_questions: '🧠 Generating questions…',
     select_best_option: 'Choose the option that best summarizes the sentence:',
     btn_new_round2: '🔄 New round', err_questions: "Couldn't generate the questions this time.",
+    empty_conversacion: 'Save at least 3 words with a translation to practice conversation.',
+    generating_conversation: '🗣️ Preparing questions…', err_conversation: "Couldn't generate the conversation this time.",
+    ph_conv_answer: 'Write your answer in English...', btn_send_answer: 'Send answer',
+    checking_answer: 'Checking…', btn_next_turn: 'Next', turn_label: 'Turn', turn_of: 'of',
+    you_label: 'You', example_label: 'Example', note_conv_used_well: 'words used correctly',
     nav_inicio: 'Home', nav_agregar: 'Add', nav_vocab: 'Vocabulary', nav_practicar: 'Practice',
     ios_title: 'Install on iPhone',
     ios_step1: '1. Tap the <strong>Share</strong> icon (□↑) in the Safari bar.',
@@ -797,13 +823,20 @@ if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-function pickBestEnglishVoice(){
+function pickBestVoice(langPrefix){
+  langPrefix = langPrefix === 'it' ? 'it' : 'en';
   if(!cachedVoices.length) cachedVoices = window.speechSynthesis.getVoices();
-  const englishVoices = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
-  if(!englishVoices.length) return null;
+  const langVoices = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith(langPrefix));
+  if(!langVoices.length) return null;
+  const mainLocale = langPrefix === 'it' ? 'it-IT' : 'en-US';
 
   // 1) Nombres de voces conocidas por sonar claras y naturales (Chrome/Android, iOS/Safari, Edge)
-  const preferredNames = [
+  const preferredNames = langPrefix === 'it' ? [
+    'Google italiano', 'Alice', 'Federica', 'Luca',
+    'Microsoft Elsa Online (Natural) - Italian (Italy)',
+    'Microsoft Diego Online (Natural) - Italian (Italy)',
+    'Microsoft Isabella Online (Natural) - Italian (Italy)',
+  ] : [
     'Google US English', 'Google UK English Female', 'Google UK English Male',
     'Samantha', 'Ava (Premium)', 'Ava', 'Karen', 'Moira', 'Tessa',
     'Microsoft Aria Online (Natural) - English (United States)',
@@ -812,22 +845,22 @@ function pickBestEnglishVoice(){
     'Microsoft Ryan Online (Natural) - English (United Kingdom)',
   ];
   for(const name of preferredNames){
-    const found = englishVoices.find(v => v.name === name);
+    const found = langVoices.find(v => v.name === name);
     if(found) return found;
   }
 
   // 2) Cualquier voz "en la nube" (no local) suele sonar mucho más natural que las locales
-  const cloudUS = englishVoices.find(v => v.lang === 'en-US' && v.localService === false);
-  if(cloudUS) return cloudUS;
-  const cloudAny = englishVoices.find(v => v.localService === false);
+  const cloudMain = langVoices.find(v => v.lang === mainLocale && v.localService === false);
+  if(cloudMain) return cloudMain;
+  const cloudAny = langVoices.find(v => v.localService === false);
   if(cloudAny) return cloudAny;
 
-  // 3) Como último recurso, cualquier voz en-US, si no cualquier voz en inglés
-  const usVoice = englishVoices.find(v => v.lang === 'en-US');
-  return usVoice || englishVoices[0];
+  // 3) Como último recurso, cualquier voz de la variante principal, si no cualquier voz del idioma
+  const mainVoice = langVoices.find(v => v.lang === mainLocale);
+  return mainVoice || langVoices[0];
 }
 
-async function speakWord(text){
+async function speakWord(text, lang){
   text = (text || '').trim();
   if(!text) return;
   if(!('speechSynthesis' in window)) return;
@@ -837,8 +870,9 @@ async function speakWord(text){
   // natural en vez de cortarla de forma abrupta (típico de utterances muy cortas).
   const spoken = /[.!?]$/.test(text) ? text : text + '.';
   const utter = new SpeechSynthesisUtterance(spoken);
-  const voice = pickBestEnglishVoice();
-  if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = 'en-US'; }
+  const langPrefix = (lang || getAccountLanguage() || 'en') === 'it' ? 'it' : 'en';
+  const voice = pickBestVoice(langPrefix);
+  if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = langPrefix === 'it' ? 'it-IT' : 'en-US'; }
   utter.rate = 0.85;
   utter.pitch = 1;
   utter.volume = 1;
@@ -957,7 +991,7 @@ function renderExamplesHtml(examples, wrap, limit){
 
 /* ---------- Agregar palabra (traducción real generada por IA) ---------- */
 let searchTimeout = null;
-let lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '' };
+let lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '', language: '' };
 
 function onWordInput(){
   const raw = document.getElementById('input-en').value.trim().toLowerCase();
@@ -989,7 +1023,7 @@ async function lookupWord(raw){
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
 
     if(data.status === 'not_english' || data.status === 'invalid'){
-      lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '' };
+      lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', language: '' };
       document.getElementById('translation-card').style.display = 'none';
       document.getElementById('own-example-card').style.display = 'none';
       document.getElementById('btn-guardar').style.display = 'none';
@@ -998,14 +1032,30 @@ async function lookupWord(raw){
       return;
     }
 
-    lastLookup = { word: raw, es: data.es || '', examples: data.examples || [], type: data.type || '', phonetic: data.phonetic || '' };
+    // Cada cuenta aprende un solo idioma: si ya tiene palabras guardadas en uno
+    // y esta búsqueda dio en el otro, no se deja guardar (evita mezclar idiomas).
+    const accountLang = getAccountLanguage();
+    if(accountLang && data.language && data.language !== accountLang){
+      lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', language: '' };
+      document.getElementById('translation-card').style.display = 'none';
+      document.getElementById('own-example-card').style.display = 'none';
+      document.getElementById('btn-guardar').style.display = 'none';
+      const langName = accountLang === 'it' ? (currentLang==='en'?'Italian':'italiano') : (currentLang==='en'?'English':'inglés');
+      note.textContent = currentLang === 'en'
+        ? `This account only saves ${langName} words.`
+        : `Esta cuenta solo guarda palabras en ${langName}.`;
+      note.style.display = 'block';
+      return;
+    }
+
+    lastLookup = { word: raw, es: data.es || '', examples: data.examples || [], type: data.type || '', phonetic: data.phonetic || '', language: data.language || '' };
     document.getElementById('translation-text').textContent = data.es || t('no_translation');
     document.getElementById('examples-list').innerHTML = renderExamplesHtml(data.examples, true);
     if(data.type){ typeEl.textContent = data.type; typeEl.style.display = 'inline-block'; }
     if(data.phonetic){ phoneticEl.textContent = data.phonetic; phoneticEl.style.display = 'block'; }
     note.style.display = 'none';
   }catch(e){
-    lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '' };
+    lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', language: '' };
     document.getElementById('translation-text').textContent = t('write_below');
     document.getElementById('examples-list').innerHTML = '';
     note.textContent = t('note_unknown');
@@ -1028,6 +1078,7 @@ async function saveWord(){
     examples: useLookup ? lastLookup.examples : [],
     word_type: useLookup ? lastLookup.type : '',
     phonetic: useLookup ? lastLookup.phonetic : '',
+    language: (useLookup && lastLookup.language) ? lastLookup.language : (getAccountLanguage() || 'en'),
     own_example: ownExample,
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
@@ -1044,7 +1095,7 @@ async function saveWord(){
   document.getElementById('own-example-card').style.display='none';
   document.getElementById('btn-guardar').style.display='none';
   document.getElementById('unknown-note').style.display='none';
-  lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '' };
+  lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '', language: '' };
 
   goTo('vocab');
 }
@@ -1080,7 +1131,7 @@ function renderInicio(){
     const recent = [...words].sort((a,b)=> b.date_added.localeCompare(a.date_added)).slice(0,5);
     recentEl.innerHTML = recent.map(w=>`
       <div class="word-row" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
-        <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
+        <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}', '${w.language||'en'}')">🔊</button></div><div class="es">${w.es}</div></div>
         <div style="text-align:right;">
           <span class="pill ${w.status}">${statusLabel(w.status)}</span>
         </div>
@@ -1093,7 +1144,7 @@ function renderVocab(){
   const el = document.getElementById('vocab-list');
   const searchInput = document.getElementById('vocab-search');
   const refreshBtn = document.getElementById('refresh-old-words-btn');
-  const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  const pendingRefresh = words.filter(w => !w.word_type || !w.phonetic || !w.language || !w.examples || w.examples.length < 4);
   if(refreshBtn){
     refreshBtn.style.display = (pendingRefresh.length > 0 && !refreshBtn.dataset.busy) ? 'block' : 'none';
   }
@@ -1120,7 +1171,7 @@ function renderVocab(){
     const pc = w.practice_count || 0;
     return `
     <div class="word-row" style="${w.hidden ? 'opacity:.55;' : ''}" onclick="openWordPopup('${w.en.replace(/'/g,"\\'")}')">
-      <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}')">🔊</button></div><div class="es">${w.es}</div></div>
+      <div><div class="en">${w.en} <button class="speak-btn small" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g,"\\'")}', '${w.language||'en'}')">🔊</button></div><div class="es">${w.es}</div></div>
       <div style="text-align:right;">
         <span class="pill ${w.status}">${statusLabel(w.status)}</span>
         ${w.hidden ? `<div style="margin-top:4px;"><span class="pill hidden-pill">${t('label_hidden')}</span></div>` : ''}
@@ -1135,7 +1186,7 @@ function renderVocab(){
    tengan (sin perder su practice_count, status ni ejemplo propio). */
 async function refreshOldWords(){
   const btn = document.getElementById('refresh-old-words-btn');
-  const pending = words.filter(w => !w.word_type || !w.phonetic || !w.examples || w.examples.length < 4);
+  const pending = words.filter(w => !w.word_type || !w.phonetic || !w.language || !w.examples || w.examples.length < 4);
   if(pending.length === 0 || btn.dataset.busy) return;
   btn.dataset.busy = '1';
   btn.disabled = true;
@@ -1149,7 +1200,8 @@ async function refreshOldWords(){
           es: data.es || w.es,
           examples: (data.examples && data.examples.length) ? data.examples : w.examples,
           word_type: data.type || '',
-          phonetic: data.phonetic || ''
+          phonetic: data.phonetic || '',
+          language: data.language || w.language || 'en'
         };
         Object.assign(w, updated);
         await sb.from('words').update(updated).eq('id', w.id);
@@ -1179,6 +1231,7 @@ function openGame(name){
   if(name==='preguntar') renderPreguntar();
   if(name==='rol') renderRol();
   if(name==='comprension') renderComprension();
+  if(name==='conversacion') renderConversacion();
 }
 
 function closeGame(){
@@ -1200,6 +1253,14 @@ function knownWords(){
   return words.filter(w => w.examples && w.examples.length > 0 && !w.hidden);
 }
 
+/* Cada cuenta de estudiante aprende UN solo idioma (inglés o italiano), nunca
+   mezclados. Devuelve el idioma que ya viene usando esta cuenta ('en' o 'it'),
+   o null si todavía no ha guardado ninguna palabra (idioma aún no establecido). */
+function getAccountLanguage(){
+  const found = words.find(w => w.language);
+  return found ? found.language : null;
+}
+
 /* ---------- Popup de traducción rápida: tocar una palabra o seleccionar una expresión ---------- */
 const inlineWordCache = {};
 let inlineWordCurrent = null;   // texto (palabra o frase) que está abierto en el popup ahora
@@ -1218,9 +1279,12 @@ async function fetchInlineWord(lower, context){
   return { data, key };
 }
 
+let wpCurrentLang = null;
+
 async function openWordPopup(text, context){
   inlineWordCurrent = text;
   inlineWordCurrentKey = null;
+  wpCurrentLang = getAccountLanguage() || 'en';
   document.getElementById('word-popup-overlay').style.display = 'block';
   document.getElementById('word-popup').style.display = 'block';
   document.getElementById('wp-word').textContent = text;
@@ -1239,6 +1303,7 @@ async function openWordPopup(text, context){
   const lower = text.toLowerCase();
   const already = words.find(w => w.en.toLowerCase() === lower);
   if(already){
+    wpCurrentLang = already.language || wpCurrentLang;
     document.getElementById('wp-translation').textContent = already.es || '';
     examplesEl.innerHTML = renderExamplesHtml(already.examples, false);
     if(already.word_type){ typeEl.textContent = already.word_type; typeEl.style.display = 'inline-block'; }
@@ -1256,6 +1321,7 @@ async function openWordPopup(text, context){
   try{
     const { data, key } = await fetchInlineWord(lower, context);
     inlineWordCurrentKey = key;
+    wpCurrentLang = data.language || wpCurrentLang;
     document.getElementById('wp-translation').textContent = data.es || t('no_translation');
     examplesEl.innerHTML = renderExamplesHtml(data.examples, false);
     if(data.type){ typeEl.textContent = data.type; typeEl.style.display = 'inline-block'; }
@@ -1342,6 +1408,7 @@ async function saveInlineWord(){
     examples: data.examples || [],
     word_type: data.type || '',
     phonetic: data.phonetic || '',
+    language: data.language || getAccountLanguage() || 'en',
     own_example: '',
     date_added: todayStr()
   }, { onConflict: 'user_id,en' });
@@ -1393,7 +1460,7 @@ async function renderHistoria(){
 
   try{
     const { data, error } = await sb.functions.invoke('generate-story', {
-      body: { words: wds.map(w => ({ en: w.en, es: w.es })) }
+      body: { words: wds.map(w => ({ en: w.en, es: w.es })), language: getAccountLanguage() || 'en' }
     });
     if(error || !data || data.error || !data.story) throw new Error((data && data.error) || (error && error.message) || 'error');
 
@@ -1577,7 +1644,7 @@ async function askVocab(){
 
   try{
     const { data, error } = await sb.functions.invoke('ask-vocab', {
-      body: { question }
+      body: { question, language: getAccountLanguage() || 'en' }
     });
     if(error || !data || data.error || !data.answer) throw new Error((data && data.error) || (error && error.message) || 'error');
     document.querySelector(`#${qId} .note`).outerHTML = `<div class="qa-answer">${wrapTapWords(data.answer).replace(/\n/g,'<br>')}</div>`;
@@ -1623,7 +1690,7 @@ async function renderRol(){
 
   try{
     const { data, error } = await sb.functions.invoke('generate-roleplay', {
-      body: { words: wds.map(w => ({ en: w.en, es: w.es })) }
+      body: { words: wds.map(w => ({ en: w.en, es: w.es })), language: getAccountLanguage() || 'en' }
     });
     if(error || !data || data.error || !Array.isArray(data.lines) || data.lines.length===0){
       throw new Error((data && data.error) || (error && error.message) || 'error');
@@ -1693,7 +1760,7 @@ async function renderComprension(){
 
   try{
     const { data, error } = await sb.functions.invoke('generate-comprehension', {
-      body: { words: prioritized.map(w => ({ en: w.en, es: w.es })) }
+      body: { words: prioritized.map(w => ({ en: w.en, es: w.es })), language: getAccountLanguage() || 'en' }
     });
     if(error || !data || data.error || !Array.isArray(data.questions) || data.questions.length===0){
       throw new Error((data && data.error) || (error && error.message) || 'error');
@@ -1766,6 +1833,121 @@ function answerComp(i, chosenIndex, btnEl){
         <button class="btn secondary small" style="margin-top:14px" onclick="renderComprension()">${t('btn_new_round2')}</button>
       </div>`;
   }
+}
+
+/* ---------- Conversación guiada: la IA pregunta pensando en una palabra,
+   el estudiante responde por texto y recibe retroalimentación al instante ---------- */
+let convState = null;
+
+async function renderConversacion(){
+  const el = document.getElementById('conversacion-content');
+  const wds = knownWords();
+  if(wds.length < 3){
+    el.innerHTML = `<div class="empty-hint">${t('empty_conversacion')}</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="empty-hint">${t('generating_conversation')}</div>`;
+
+  const chosen = pickPriorityWords(wds, Math.min(5, wds.length));
+
+  try{
+    const { data, error } = await sb.functions.invoke('generate-conversation', {
+      body: { action: 'question', words: chosen.map(w => ({ en: w.en, es: w.es })), language: getAccountLanguage() || 'en' }
+    });
+    if(error || !data || data.error || !Array.isArray(data.turns) || data.turns.length===0){
+      throw new Error((data && data.error) || (error && error.message) || 'error');
+    }
+    convState = {
+      turns: data.turns.map(tn => ({ word: tn.word, es: tn.es, question: tn.question })),
+      current: 0,
+      score: 0
+    };
+    paintConversacion();
+    logActivity();
+  }catch(e){
+    el.innerHTML = `
+      <div class="empty-hint">${t('err_conversation')}</div>
+      <button class="btn secondary small" onclick="renderConversacion()">${t('btn_retry')}</button>
+    `;
+  }
+}
+
+function paintConversacion(){
+  const el = document.getElementById('conversacion-content');
+  if(!convState) return;
+
+  if(convState.current >= convState.turns.length){
+    el.innerHTML = `
+      <div class="score-banner">
+        <div class="big">${convState.score}/${convState.turns.length}</div>
+        <div class="note">${t('note_conv_used_well')}</div>
+        <button class="btn secondary small" style="margin-top:14px" onclick="renderConversacion()">${t('btn_new_round2')}</button>
+      </div>`;
+    return;
+  }
+
+  const turn = convState.turns[convState.current];
+  el.innerHTML = `
+    <div class="note" style="margin-bottom:10px;">${t('turn_label')} ${convState.current+1} ${t('turn_of')} ${convState.turns.length}</div>
+    <div class="chat-row a">
+      <div class="chat-col">
+        <div class="chat-speaker">AI</div>
+        <div class="chat-bubble">${turn.question} <button class="speak-btn small" onclick="speakWord('${turn.question.replace(/'/g,"\\'")}')">🔊</button></div>
+      </div>
+    </div>
+    <div id="conv-answer-area" style="margin-top:14px;">
+      <textarea id="conv-answer-input" placeholder="${t('ph_conv_answer')}"></textarea>
+      <button class="btn" style="margin-top:10px;" onclick="submitConvAnswer()">${t('btn_send_answer')}</button>
+    </div>
+    <div id="conv-feedback"></div>
+  `;
+}
+
+async function submitConvAnswer(){
+  const turn = convState.turns[convState.current];
+  const input = document.getElementById('conv-answer-input');
+  const answer = input.value.trim();
+  if(!answer) return;
+  const btn = document.querySelector('#conv-answer-area .btn');
+  btn.disabled = true;
+  btn.textContent = t('checking_answer');
+  input.disabled = true;
+
+  try{
+    const { data, error } = await sb.functions.invoke('generate-conversation', {
+      body: { action: 'feedback', word: turn.word, es: turn.es, question: turn.question, answer, language: getAccountLanguage() || 'en' }
+    });
+    if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
+
+    if(data.used_correctly) convState.score++;
+    bumpPracticeCount(turn.word);
+
+    document.getElementById('conv-answer-area').innerHTML = `
+      <div class="chat-row b">
+        <div class="chat-col">
+          <div class="chat-speaker">${t('you_label')}</div>
+          <div class="chat-bubble">${answer}</div>
+        </div>
+      </div>`;
+
+    document.getElementById('conv-feedback').innerHTML = `
+      <div class="note" style="margin-top:10px; ${data.used_correctly ? 'color:#2f9c5c;' : 'color:#c97324;'}">
+        ${data.used_correctly ? '✓' : '💡'} ${data.feedback || ''}
+      </div>
+      ${(!data.used_correctly && data.model_example) ? `<div class="note" style="margin-top:6px;"><em>${t('example_label')}:</em> ${data.model_example}</div>` : ''}
+      <button class="btn secondary small" style="margin-top:14px;" onclick="nextConvTurn()">${t('btn_next_turn')}</button>
+    `;
+  }catch(e){
+    btn.disabled = false;
+    input.disabled = false;
+    btn.textContent = t('btn_send_answer');
+    document.getElementById('conv-feedback').innerHTML = `<div class="note">${t('err_conversation')}</div>`;
+  }
+}
+
+function nextConvTurn(){
+  convState.current++;
+  paintConversacion();
 }
 
 /* ---------- PWA: instalación en el celular ---------- */
