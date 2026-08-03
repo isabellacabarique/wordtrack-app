@@ -651,7 +651,7 @@ const I18N = {
     note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
     btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
     btn_mark_complete: 'Marcar como completado', marking_complete: 'Marcando…', btn_completed_check: '✓ Completado',
-    btn_listen_story: '🔊 Escuchar historia completa', btn_stop_story: '⏸ Detener',
+    btn_listen_story: '🔊 Escuchar historia completa', btn_pause_story: '⏸ Pausar', btn_resume_story: '▶ Continuar',
     note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
     generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
     note_rol_words: 'Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.',
@@ -734,7 +734,7 @@ const I18N = {
     note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
     btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
     btn_mark_complete: 'Mark as complete', marking_complete: 'Marking…', btn_completed_check: '✓ Completed',
-    btn_listen_story: '🔊 Listen to full story', btn_stop_story: '⏸ Stop',
+    btn_listen_story: '🔊 Listen to full story', btn_pause_story: '⏸ Pause', btn_resume_story: '▶ Resume',
     note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
     generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
     note_rol_words: "The bold words are the ones you saved. Tap them if you don't remember their meaning.",
@@ -1282,7 +1282,8 @@ function openGame(name){
 
 function closeGame(){
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
-  storySpeaking = false;
+  storyPlayState = 'idle';
+  storyChunkIndex = 0;
   showPracticarMenu();
 }
 
@@ -1497,7 +1498,9 @@ function toSentenceCaseTitle(str){
 let currentStoryWords = [];
 
 let currentStoryText = '';
-let storySpeaking = false;
+let storyChunks = [];
+let storyChunkIndex = 0;
+let storyPlayState = 'idle'; // 'idle' | 'playing' | 'paused'
 
 async function renderHistoria(){
   const el = document.getElementById('historia-content');
@@ -1507,7 +1510,9 @@ async function renderHistoria(){
     return;
   }
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
-  storySpeaking = false;
+  storyPlayState = 'idle';
+  storyChunks = [];
+  storyChunkIndex = 0;
   el.innerHTML = `<div class="empty-hint">${t('generating_story')}</div>`;
   currentStoryWords = [];
   currentStoryText = '';
@@ -1549,36 +1554,74 @@ async function renderHistoria(){
 
 /* Lee en voz alta la historia completa (sin tener que ir palabra por palabra).
    El estudiante sigue pudiendo tocar cada palabra por separado como antes. */
-async function toggleStorySpeech(){
-  if(!('speechSynthesis' in window)) return;
-  const btn = document.getElementById('btn-listen-story');
+/* Divide el texto en oraciones para poder pausar y seguir exactamente
+   donde se quedó (en vez de reiniciar desde el principio de la historia). */
+function splitIntoSentences(text){
+  const matches = text.match(/[^.!?]+[.!?]+(\s+|$)/g);
+  if(matches && matches.length) return matches.map(s => s.trim()).filter(Boolean);
+  return [text.trim()].filter(Boolean);
+}
 
-  if(storySpeaking){
-    window.speechSynthesis.cancel();
-    storySpeaking = false;
-    if(btn) btn.textContent = t('btn_listen_story');
+function updateStoryBtnLabel(){
+  const btn = document.getElementById('btn-listen-story');
+  if(!btn) return;
+  if(storyPlayState === 'playing') btn.textContent = t('btn_pause_story');
+  else if(storyPlayState === 'paused') btn.textContent = t('btn_resume_story');
+  else btn.textContent = t('btn_listen_story');
+}
+
+function speakStoryChunk(){
+  if(storyChunkIndex >= storyChunks.length){
+    storyPlayState = 'idle';
+    storyChunkIndex = 0;
+    updateStoryBtnLabel();
     return;
   }
-
-  const clean = (currentStoryText || '').replace(/\*\*/g, '').trim();
-  if(!clean) return;
-
-  await Promise.race([voicesReady(), new Promise(r => setTimeout(r, 400))]);
   window.speechSynthesis.cancel();
-
-  const utter = new SpeechSynthesisUtterance(clean);
+  const utter = new SpeechSynthesisUtterance(storyChunks[storyChunkIndex]);
   const langPrefix = (getAccountLanguage() || 'en') === 'it' ? 'it' : 'en';
   const voice = pickBestVoice(langPrefix);
   if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = langPrefix === 'it' ? 'it-IT' : 'en-US'; }
   utter.rate = 0.85;
   utter.pitch = 1;
   utter.volume = 1;
-  utter.onend = () => { storySpeaking = false; if(btn) btn.textContent = t('btn_listen_story'); };
-  utter.onerror = () => { storySpeaking = false; if(btn) btn.textContent = t('btn_listen_story'); };
-
-  storySpeaking = true;
-  if(btn) btn.textContent = t('btn_stop_story');
+  utter.onend = () => {
+    if(storyPlayState !== 'playing') return; // se pausó justo cuando terminaba esta oración
+    storyChunkIndex++;
+    speakStoryChunk();
+  };
+  utter.onerror = () => {
+    if(storyPlayState !== 'playing') return; // fue una pausa (cancel dispara error en algunos navegadores)
+    storyPlayState = 'idle';
+    storyChunkIndex = 0;
+    updateStoryBtnLabel();
+  };
   window.speechSynthesis.speak(utter);
+}
+
+async function toggleStorySpeech(){
+  if(!('speechSynthesis' in window)) return;
+
+  if(storyPlayState === 'playing'){
+    // Pausar: se detiene justo en la oración actual, sin avanzar el índice.
+    storyPlayState = 'paused';
+    window.speechSynthesis.cancel();
+    updateStoryBtnLabel();
+    return;
+  }
+
+  if(storyPlayState === 'idle'){
+    const clean = (currentStoryText || '').replace(/\*\*/g, '').trim();
+    if(!clean) return;
+    storyChunks = splitIntoSentences(clean);
+    storyChunkIndex = 0;
+  }
+  // Si estaba 'paused', continúa desde storyChunkIndex tal como quedó.
+
+  await Promise.race([voicesReady(), new Promise(r => setTimeout(r, 400))]);
+  storyPlayState = 'playing';
+  updateStoryBtnLabel();
+  speakStoryChunk();
 }
 
 async function completeStory(){
