@@ -651,6 +651,8 @@ const I18N = {
     note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
     btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
     btn_copy_story: '📋 Copiar historia', link_natural_readers: '🔗 Natural Readers', story_copied: '✓ Copiado', err_copy_story: 'No se pudo copiar el texto.',
+    historia_listen_title: '¿Quieres escuchar la historia en voz alta?',
+    historia_listen_steps: '1. Copia la historia. 2. Pégala en Natural Readers y dale play. (También puedes descargar la app Natural Readers en tu celular.)',
     btn_mark_complete: 'Marcar como completado', marking_complete: 'Marcando…', btn_completed_check: '✓ Completado',
     note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
     generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
@@ -734,6 +736,8 @@ const I18N = {
     note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
     btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
     btn_copy_story: '📋 Copy story', link_natural_readers: '🔗 Natural Readers', story_copied: '✓ Copied', err_copy_story: "Couldn't copy the text.",
+    historia_listen_title: 'Want to listen to the story out loud?',
+    historia_listen_steps: '1. Copy the story. 2. Paste it into Natural Readers and hit play. (You can also download the Natural Readers app on your phone.)',
     btn_mark_complete: 'Mark as complete', marking_complete: 'Marking…', btn_completed_check: '✓ Completed',
     note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
     generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
@@ -1523,9 +1527,13 @@ async function renderHistoria(){
     currentStoryPlainText = (storyTitle ? storyTitle + '\n\n' : '') + data.story.replace(/\*\*/g, '');
 
     el.innerHTML = `
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
-        <button class="btn secondary small" id="btn-copy-story" onclick="copyStoryText()">${t('btn_copy_story')}</button>
-        <a class="btn secondary small" href="https://www.naturalreaders.com/" target="_blank" rel="noopener" style="text-decoration:none; display:inline-flex; align-items:center;">${t('link_natural_readers')}</a>
+      <div class="card" style="margin-bottom:14px; padding:14px;">
+        <div style="font-weight:700; font-size:14px; margin-bottom:6px;">${t('historia_listen_title')}</div>
+        <p class="note" style="margin:0 0 10px;">${t('historia_listen_steps')}</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn small" id="btn-copy-story" onclick="copyStoryText()">${t('btn_copy_story')}</button>
+          <a class="btn secondary small" href="https://www.naturalreaders.com/" target="_blank" rel="noopener" style="text-decoration:none; display:inline-flex; align-items:center;">${t('link_natural_readers')}</a>
+        </div>
       </div>
       ${titleHtml}
       ${html}
