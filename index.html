@@ -651,6 +651,7 @@ const I18N = {
     note_story_words: 'Las palabras en negrilla son las que guardaste — tócalas para recordar su significado. El resto de las palabras también las puedes tocar para traducirlas y guardarlas si quieres.',
     btn_new_story: '🔄 Nueva historia', err_story: 'No se pudo generar la historia esta vez.', btn_retry: 'Reintentar',
     btn_mark_complete: 'Marcar como completado', marking_complete: 'Marcando…', btn_completed_check: '✓ Completado',
+    btn_listen_story: '🔊 Escuchar historia completa', btn_stop_story: '⏸ Detener',
     note_correct_answers: 'respuestas correctas', btn_new_round: '🔄 Jugar otra ronda',
     generating_conv: '🎭 Generando conversación…', persona_label: 'Persona',
     note_rol_words: 'Las palabras en negrilla son las que guardaste. Tócalas si no recuerdas su significado.',
@@ -733,6 +734,7 @@ const I18N = {
     note_story_words: "The bold words are the ones you saved — tap them to recall their meaning. You can also tap any other word to translate and save it if you want.",
     btn_new_story: '🔄 New story', err_story: "Couldn't generate the story this time.", btn_retry: 'Retry',
     btn_mark_complete: 'Mark as complete', marking_complete: 'Marking…', btn_completed_check: '✓ Completed',
+    btn_listen_story: '🔊 Listen to full story', btn_stop_story: '⏸ Stop',
     note_correct_answers: 'correct answers', btn_new_round: '🔄 Play another round',
     generating_conv: '🎭 Generating conversation…', persona_label: 'Person',
     note_rol_words: "The bold words are the ones you saved. Tap them if you don't remember their meaning.",
@@ -1279,6 +1281,8 @@ function openGame(name){
 }
 
 function closeGame(){
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  storySpeaking = false;
   showPracticarMenu();
 }
 
@@ -1492,6 +1496,9 @@ function toSentenceCaseTitle(str){
    historias antes de quedarse con una, las que no leyó no cuentan. */
 let currentStoryWords = [];
 
+let currentStoryText = '';
+let storySpeaking = false;
+
 async function renderHistoria(){
   const el = document.getElementById('historia-content');
   const wds = knownWords();
@@ -1499,8 +1506,11 @@ async function renderHistoria(){
     el.innerHTML = `<div class="empty-hint">${t('empty_historia')}</div>`;
     return;
   }
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  storySpeaking = false;
   el.innerHTML = `<div class="empty-hint">${t('generating_story')}</div>`;
   currentStoryWords = [];
+  currentStoryText = '';
 
   try{
     const { data, error } = await sb.functions.invoke('generate-story', {
@@ -1516,9 +1526,11 @@ async function renderHistoria(){
       : '';
 
     currentStoryWords = Array.isArray(data.words_used) ? data.words_used.filter(Boolean) : [];
+    currentStoryText = data.story;
 
     el.innerHTML = `
       ${titleHtml}
+      <button class="btn secondary small" id="btn-listen-story" onclick="toggleStorySpeech()" style="margin-bottom:12px;">${t('btn_listen_story')}</button>
       ${html}
       <p class="note">${t('note_story_words')}</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
@@ -1533,6 +1545,40 @@ async function renderHistoria(){
       <button class="btn secondary small" onclick="renderHistoria()">${t('btn_retry')}</button>
     `;
   }
+}
+
+/* Lee en voz alta la historia completa (sin tener que ir palabra por palabra).
+   El estudiante sigue pudiendo tocar cada palabra por separado como antes. */
+async function toggleStorySpeech(){
+  if(!('speechSynthesis' in window)) return;
+  const btn = document.getElementById('btn-listen-story');
+
+  if(storySpeaking){
+    window.speechSynthesis.cancel();
+    storySpeaking = false;
+    if(btn) btn.textContent = t('btn_listen_story');
+    return;
+  }
+
+  const clean = (currentStoryText || '').replace(/\*\*/g, '').trim();
+  if(!clean) return;
+
+  await Promise.race([voicesReady(), new Promise(r => setTimeout(r, 400))]);
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(clean);
+  const langPrefix = (getAccountLanguage() || 'en') === 'it' ? 'it' : 'en';
+  const voice = pickBestVoice(langPrefix);
+  if(voice){ utter.voice = voice; utter.lang = voice.lang; } else { utter.lang = langPrefix === 'it' ? 'it-IT' : 'en-US'; }
+  utter.rate = 0.85;
+  utter.pitch = 1;
+  utter.volume = 1;
+  utter.onend = () => { storySpeaking = false; if(btn) btn.textContent = t('btn_listen_story'); };
+  utter.onerror = () => { storySpeaking = false; if(btn) btn.textContent = t('btn_listen_story'); };
+
+  storySpeaking = true;
+  if(btn) btn.textContent = t('btn_stop_story');
+  window.speechSynthesis.speak(utter);
 }
 
 async function completeStory(){
