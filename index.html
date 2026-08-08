@@ -1038,13 +1038,20 @@ function onWordInput(){
   searchTimeout = setTimeout(() => lookupWord(raw), 600);
 }
 
+let lookupRequestId = 0;
+
 async function lookupWord(raw){
+  const myRequestId = ++lookupRequestId;
   const note = document.getElementById('unknown-note');
   const typeEl = document.getElementById('translation-type');
   const phoneticEl = document.getElementById('translation-phonetic');
   const context = document.getElementById('input-context').value.trim();
   try{
     const { data, error } = await sb.functions.invoke('translate-word', { body: { word: raw, context: context || undefined } });
+    // Si mientras esperábamos la respuesta el estudiante ya escribió otra
+    // palabra distinta, esta respuesta quedó vieja: la ignoramos por completo
+    // para no pisar en pantalla lo que corresponde a la palabra actual.
+    if(myRequestId !== lookupRequestId) return;
     if(error || !data || data.error) throw new Error((data && data.error) || (error && error.message) || 'error');
 
     if(data.status === 'not_english' || data.status === 'invalid'){
@@ -1080,6 +1087,7 @@ async function lookupWord(raw){
     if(data.phonetic){ phoneticEl.textContent = data.phonetic; phoneticEl.style.display = 'block'; }
     note.style.display = 'none';
   }catch(e){
+    if(myRequestId !== lookupRequestId) return;
     lastLookup = { word: raw, es: '', examples: [], type: '', phonetic: '', language: '' };
     document.getElementById('translation-text').textContent = t('write_below');
     document.getElementById('examples-list').innerHTML = '';
@@ -1330,8 +1338,10 @@ async function fetchInlineWord(lower, context){
 }
 
 let wpCurrentLang = null;
+let popupRequestId = 0;
 
 async function openWordPopup(text, context){
+  const myRequestId = ++popupRequestId;
   inlineWordCurrent = text;
   inlineWordCurrentKey = null;
   wpCurrentLang = getAccountLanguage() || 'en';
@@ -1370,6 +1380,9 @@ async function openWordPopup(text, context){
   document.getElementById('wp-translation').textContent = t('searching');
   try{
     const { data, key } = await fetchInlineWord(lower, context);
+    // Si el estudiante ya tocó otra palabra mientras esperábamos esta
+    // respuesta, la ignoramos para no mostrar la traducción equivocada.
+    if(myRequestId !== popupRequestId) return;
     inlineWordCurrentKey = key;
     wpCurrentLang = data.language || wpCurrentLang;
     document.getElementById('wp-translation').textContent = data.es || t('no_translation');
@@ -1380,6 +1393,7 @@ async function openWordPopup(text, context){
     saveBtn.disabled = false;
     saveBtn.style.display = 'block';
   }catch(e){
+    if(myRequestId !== popupRequestId) return;
     document.getElementById('wp-translation').textContent = t('err_translate');
   }
 }
