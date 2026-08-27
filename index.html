@@ -77,6 +77,13 @@
     background:transparent; color:var(--text); outline:none; font-family:inherit;
   }
   input:focus, textarea:focus{ border-bottom-color:var(--blue); }
+  .search-bar{
+    display:flex; align-items:center; gap:8px; background:var(--card);
+    border:2px solid var(--blue); border-radius:24px; padding:10px 16px; margin:0 0 16px;
+  }
+  .search-bar .search-icon{ font-size:15px; }
+  .search-bar input[type=text]{ border:none; padding:0; font-size:15px; }
+  .search-bar input[type=text]:focus{ border:none; }
   textarea{ resize:vertical; min-height:44px; }
   .translation{ font-size:18px; color:var(--blue-dark); font-weight:600; }
   .example-chip{
@@ -364,6 +371,22 @@
         </div>
       </div>
 
+      <div class="card" style="margin-top:14px;">
+        <div style="font-weight:700; font-size:14px; margin-bottom:10px;" data-i18n="date_range_title">¿Quieres saber cuántas palabras has aprendido?</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+          <div style="flex:1; min-width:120px;">
+            <label class="field-label" data-i18n="label_from">Desde</label>
+            <input type="date" id="range-from">
+          </div>
+          <div style="flex:1; min-width:120px;">
+            <label class="field-label" data-i18n="label_to">Hasta</label>
+            <input type="date" id="range-to">
+          </div>
+          <button class="btn small" onclick="checkWordsInRange()" data-i18n="btn_view_range">Ver</button>
+        </div>
+        <div id="range-result" class="note" style="margin-top:10px;"></div>
+      </div>
+
       <h2 class="section-title" data-i18n="section_recent">Últimas palabras agregadas</h2>
       <div class="card" id="recent-list">
         <div class="empty-hint" data-i18n="empty_no_words">Todavía no has agregado palabras. Ve a "Agregar" para empezar.</div>
@@ -377,7 +400,7 @@
       <div class="card">
         <div class="field-group">
           <label class="field-label" data-i18n="label_context">Contexto (opcional)</label>
-          <input type="text" id="input-context" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here">
+          <input type="text" id="input-context" oninput="onWordInput()" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here">
         </div>
         <label class="field-label" data-i18n="label_word">palabra</label>
         <input type="text" id="input-en" placeholder="Escribe una palabra o expresión..." oninput="onWordInput()" data-i18n-ph="ph_word_input">
@@ -412,9 +435,12 @@
     <!-- MI VOCABULARIO -->
     <section class="screen" id="screen-vocab">
       <h2 class="section-title" data-i18n="section_my_vocab">Mi vocabulario</h2>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="vocab-search" oninput="renderVocab()" placeholder="Buscar palabra..." data-i18n-ph="ph_search_vocab">
+      </div>
       <p class="note" style="margin:-4px 0 14px;" data-i18n="note_practice_recommendation">Recomendación: practica cada palabra mínimo 15 veces. Luego, la verás con menos frecuencia.</p>
       <button class="btn secondary small" id="refresh-old-words-btn" style="display:none; margin-bottom:12px;" onclick="refreshOldWords()" data-i18n="btn_refresh_old_words">Actualizar palabras anteriores</button>
-      <input type="text" id="vocab-search" oninput="renderVocab()" placeholder="Buscar palabra..." data-i18n-ph="ph_search_vocab" style="margin-bottom:12px;">
       <div class="card" id="vocab-list">
         <div class="empty-hint" data-i18n="empty_no_saved">Aún no hay palabras guardadas.</div>
       </div>
@@ -612,6 +638,9 @@ const I18N = {
     install_banner_ios_text: 'Toca "Instalar" y sigue los pasos para agregarla a tu pantalla de inicio.',
     btn_install: 'Instalar',
     stat_streak_label: 'Racha actual', stat_30d_label: 'Palabras (30 días)', stat_total_label: 'Total guardadas',
+    date_range_title: '¿Quieres saber cuántas palabras has aprendido?', label_from: 'Desde', label_to: 'Hasta',
+    btn_view_range: 'Ver', err_range_missing: 'Elige las dos fechas.', err_range_order: 'La fecha "Desde" debe ser antes que "Hasta".',
+    range_result_prefix: 'Aprendiste ', range_result_suffix: ' palabras en ese periodo.',
     section_recent: 'Últimas palabras agregadas',
     empty_no_words: 'Todavía no has agregado palabras. Ve a "Agregar" para empezar.',
     btn_add_new_word: '+ Agregar palabra nueva',
@@ -697,6 +726,9 @@ const I18N = {
     install_banner_ios_text: 'Tap "Install" and follow the steps to add it to your home screen.',
     btn_install: 'Install',
     stat_streak_label: 'Current streak', stat_30d_label: 'Words (30 days)', stat_total_label: 'Total saved',
+    date_range_title: 'How many words did you learn in a period?', label_from: 'From', label_to: 'To',
+    btn_view_range: 'View', err_range_missing: 'Choose both dates.', err_range_order: 'The "From" date must be before the "To" date.',
+    range_result_prefix: 'You learned ', range_result_suffix: ' words in that period.',
     section_recent: 'Recently added words',
     empty_no_words: 'You haven\'t added any words yet. Go to "Add" to get started.',
     btn_add_new_word: '+ Add new word',
@@ -1146,6 +1178,25 @@ function computeStreak(){
   return streak;
 }
 
+/* Cuenta cuántas palabras se guardaron entre dos fechas exactas que el
+   estudiante elige, para que pueda ver su progreso más allá de los últimos
+   30 días que muestra la tarjeta de arriba. */
+function checkWordsInRange(){
+  const fromVal = document.getElementById('range-from').value;
+  const toVal = document.getElementById('range-to').value;
+  const resultEl = document.getElementById('range-result');
+  if(!fromVal || !toVal){
+    resultEl.textContent = t('err_range_missing');
+    return;
+  }
+  if(fromVal > toVal){
+    resultEl.textContent = t('err_range_order');
+    return;
+  }
+  const count = words.filter(w => w.date_added >= fromVal && w.date_added <= toVal).length;
+  resultEl.textContent = t('range_result_prefix') + count + t('range_result_suffix');
+}
+
 function renderInicio(){
   const streak = computeStreak();
   document.getElementById('streak-badge').textContent = streak;
@@ -1181,8 +1232,8 @@ function renderVocab(){
   if(refreshBtn){
     refreshBtn.style.display = (pendingRefresh.length > 0 && !refreshBtn.dataset.busy) ? 'block' : 'none';
   }
-  if(searchInput){
-    searchInput.style.display = words.length === 0 ? 'none' : 'block';
+  if(searchInput && searchInput.closest('.search-bar')){
+    searchInput.closest('.search-bar').style.display = words.length === 0 ? 'none' : 'flex';
   }
   if(words.length===0){
     el.innerHTML = `<div class="empty-hint">${t('empty_no_saved')}</div>`;
@@ -1198,7 +1249,7 @@ function renderVocab(){
   }
   const sorted = [...filtered].sort((a,b)=> {
     if(!!a.hidden !== !!b.hidden) return a.hidden ? 1 : -1;
-    return b.date_added.localeCompare(a.date_added);
+    return a.en.localeCompare(b.en);
   });
   el.innerHTML = sorted.map(w=>{
     const pc = w.practice_count || 0;
