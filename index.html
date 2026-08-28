@@ -82,7 +82,7 @@
     border:2px solid var(--blue); border-radius:24px; padding:10px 16px; margin:0 0 16px;
   }
   .search-bar .search-icon{ font-size:15px; }
-  .search-bar input[type=text]{ border:none; padding:0; font-size:15px; }
+  .search-bar input[type=text]{ border:none; padding:0; font-size:16px; }
   .search-bar input[type=text]:focus{ border:none; }
   textarea{ resize:vertical; min-height:44px; }
   .translation{ font-size:18px; color:var(--blue-dark); font-weight:600; }
@@ -585,15 +585,6 @@
     </div>
   </div>
 
-  <!-- Confirmación para eliminar una palabra guardada -->
-  <div id="delete-word-modal" style="display:none; position:fixed; inset:0; background:rgba(20,40,70,0.45); z-index:24; align-items:flex-end; justify-content:center;" onclick="if(event.target===this) closeDeleteWordModal()">
-    <div class="card" style="width:100%; max-width:480px; border-radius:24px 24px 0 0; margin:0;">
-      <div style="font-weight:700; font-size:16px; margin-bottom:10px;" data-i18n="delete_word_title">Eliminar palabra</div>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;" id="delete-word-body"></p>
-      <button class="btn" style="background:#c0392b;" onclick="confirmDeleteWord()" id="delete-word-confirm-btn" data-i18n="delete_word_confirm">Sí, eliminar</button>
-      <button class="btn secondary" style="margin-top:10px;" onclick="closeDeleteWordModal()" data-i18n="btn_cancel">Cancelar</button>
-    </div>
-  </div>
 
   <!-- Botón flotante: aparece cuando el estudiante selecciona/subraya una expresión en la historia -->
   <button id="translate-selection-btn" data-i18n="btn_translate_selection">🔍 Traducir selección</button>
@@ -616,7 +607,7 @@
     <div class="wp-examples" id="wp-examples"></div>
     <button class="btn wp-save-btn" id="wp-save-btn" onclick="saveInlineWord()" style="display:none" data-i18n="btn_save_vocab">+ Guardar en mi vocabulario</button>
     <button class="btn secondary wp-save-btn" id="wp-hide-btn" onclick="toggleHideWord()" style="display:none"></button>
-    <button class="btn secondary wp-save-btn" id="wp-delete-btn" onclick="openDeleteWordModal()" style="display:none; color:#c0392b; border-color:#c0392b;" data-i18n="btn_delete_word">Eliminar palabra</button>
+    <button class="btn secondary wp-save-btn" id="wp-delete-btn" onclick="deleteWordNow()" style="display:none; color:#c0392b; border-color:#c0392b;" data-i18n="btn_delete_word">Eliminar palabra</button>
   </div>
 
 </div>
@@ -717,8 +708,7 @@ const I18N = {
     already_saved: '✓ Ya está en tu vocabulario', no_translation: '(sin traducción)',
     btn_hide_word: 'Ya me la sé, no mostrar más', btn_unhide_word: 'Volver a mostrar en las prácticas',
     label_hidden: 'Ya no se practica',
-    btn_delete_word: 'Eliminar palabra', delete_word_title: 'Eliminar palabra',
-    delete_word_confirm: 'Sí, eliminar', deleting_word: 'Eliminando…',
+    btn_delete_word: 'Eliminar palabra', deleting_word: 'Eliminando…',
     btn_more_examples: 'Ver más ejemplos',
     err_translate: 'No se pudo traducir esta vez.', saving: 'Guardando…', err_save: 'No se pudo guardar', saved_check: '✓ Guardada',
     auth_sub: 'Guarda tu vocabulario y practica cuando quieras',
@@ -807,8 +797,7 @@ const I18N = {
     already_saved: '✓ Already in your vocabulary', no_translation: '(no translation)',
     btn_hide_word: "I already know it, stop showing it", btn_unhide_word: 'Show it in practice again',
     label_hidden: 'No longer practiced',
-    btn_delete_word: 'Delete word', delete_word_title: 'Delete word',
-    delete_word_confirm: 'Yes, delete', deleting_word: 'Deleting…',
+    btn_delete_word: 'Delete word', deleting_word: 'Deleting…',
     btn_more_examples: 'Show more examples',
     err_translate: "Couldn't translate this time.", saving: 'Saving…', err_save: "Couldn't save", saved_check: '✓ Saved',
     auth_sub: 'Save your vocabulary and practice whenever you want',
@@ -1486,37 +1475,18 @@ async function toggleHideWord(){
 }
 
 /* Eliminar por completo una palabra guardada (y su progreso), a pedido del
-   estudiante. Pide confirmación antes de borrar, ya que no se puede deshacer. */
-let deleteWordId = null;
-function openDeleteWordModal(){
+   estudiante. Se elimina de una vez al dar clic, sin pantalla de confirmación. */
+async function deleteWordNow(){
   const deleteBtn = document.getElementById('wp-delete-btn');
   const id = deleteBtn.dataset.wordId;
-  const w = words.find(x => String(x.id) === String(id));
-  if(!w) return;
-  deleteWordId = w.id;
-  document.getElementById('delete-word-body').textContent =
-    (currentLang === 'en'
-      ? `This will permanently delete "${w.en}" and its progress. This cannot be undone.`
-      : `Esto va a eliminar "${w.en}" y su progreso para siempre. Esta acción no se puede deshacer.`);
-  document.getElementById('delete-word-modal').style.display = 'flex';
-}
-
-function closeDeleteWordModal(){
-  document.getElementById('delete-word-modal').style.display = 'none';
-  deleteWordId = null;
-}
-
-async function confirmDeleteWord(){
-  if(!deleteWordId) return;
-  const btn = document.getElementById('delete-word-confirm-btn');
-  btn.disabled = true;
-  btn.textContent = t('deleting_word');
-  const { error } = await sb.from('words').delete().eq('id', deleteWordId);
-  btn.disabled = false;
-  btn.textContent = t('delete_word_confirm');
+  if(!id) return;
+  deleteBtn.disabled = true;
+  deleteBtn.textContent = t('deleting_word');
+  const { error } = await sb.from('words').delete().eq('id', id);
+  deleteBtn.disabled = false;
+  deleteBtn.textContent = t('btn_delete_word');
   if(error){ alert(t('err_save_word') + error.message); return; }
   await loadUserData();
-  closeDeleteWordModal();
   closeWordPopup();
   renderVocab();
   renderInicio();
