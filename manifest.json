@@ -1,13 +1,13 @@
 {
-  "name": "WordTrack - Vocabulario en inglés",
-  "short_name": "WordTrack",
+  "name": "Lexi - Vocabulario en inglés",
+  "short_name": "Lexi",
   "description": "Guarda vocabulario nuevo en inglés, sigue tu racha y practica con juegos.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#eef4fb",
-  "theme_color": "#2ab5c0",
+  "theme_color": "#1BB5B4",
   "lang": "es",
   "icons": [
     {
