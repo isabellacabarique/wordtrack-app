@@ -261,7 +261,7 @@
     min-height:100vh; display:flex; flex-direction:column; justify-content:center;
     padding:24px; max-width:480px; margin:0 auto; width:100%; box-sizing:border-box;
   }
-  .auth-logo{ text-align:center; margin-bottom:6px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .auth-logo{ text-align:center; margin-bottom:0; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .auth-logo .brand-wordmark{ height:64px; width:auto; }
   .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
   .auth-by{ text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
@@ -283,7 +283,7 @@
 <!-- ===================== PANTALLA DE AUTENTICACIÓN (simulada) ===================== -->
 <div id="auth-screen">
   <div class="auth-logo">
-    <img class="brand-wordmark" src="wordmark.png" alt="Lexi">
+    <img class="brand-wordmark" src="wordmark.png?v=3" alt="Lexi">
   </div>
   <div class="auth-sub" data-i18n="auth_sub">Guarda tu vocabulario y practica cuando quieras</div>
 
@@ -330,7 +330,7 @@
 <div class="phone" id="app-content" style="display:none">
 
   <header class="topbar">
-    <h1 class="brand-row"><img class="brand-wordmark" src="wordmark.png" alt="Lexi"></h1>
+    <h1 class="brand-row"><img class="brand-wordmark" src="wordmark.png?v=3" alt="Lexi"></h1>
     <div class="right">
       <div class="badge">🔥 <span id="streak-badge">0</span> <span data-i18n="days_label">días</span></div>
       <button class="lang-toggle" id="lang-toggle" onclick="toggleLanguage()" title="Cambiar idioma / Change language">ES</button>
