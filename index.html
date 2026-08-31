@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WordTrack — Prototipo</title>
+<title>Lexi — Prototipo</title>
 
 <!-- PWA: permite "Agregar a pantalla de inicio" -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2ab5c0">
+<meta name="theme-color" content="#1BB5B4">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="WordTrack">
+<meta name="apple-mobile-web-app-title" content="Lexi">
 
 <style>
   :root{
     --bg:#eef4fb;
     --card:#ffffff;
-    --blue:#2ab5c0;
-    --blue-dark:#1c8790;
-    --blue-tint:#e2f5f6;
+    --blue:#1BB5B4;
+    --blue-dark:#0E7A7A;
+    --blue-tint:#e3fbfb;
     --green:#3aa76d;
     --text:#22313f;
     --muted:#8a9bab;
@@ -43,7 +43,6 @@
   }
   header.topbar h1{ font-size:20px; margin:0; }
   .brand-row{ display:flex; align-items:center; gap:8px; }
-  .brand-icon{ height:30px; width:30px; display:block; }
   .brand-wordmark{ height:20px; display:block; }
   header.topbar .right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   header.topbar .badge{
@@ -263,8 +262,7 @@
     padding:24px; max-width:480px; margin:0 auto; width:100%; box-sizing:border-box;
   }
   .auth-logo{ text-align:center; margin-bottom:6px; display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .auth-logo .brand-icon{ height:52px; width:52px; }
-  .auth-logo .brand-wordmark{ height:34px; }
+  .auth-logo .brand-wordmark{ height:56px; }
   .auth-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:24px; }
   .auth-by{ text-align:center; color:var(--muted); font-size:12px; margin-top:14px; }
   .auth-tabs{ display:flex; gap:8px; margin-bottom:20px; }
@@ -285,8 +283,7 @@
 <!-- ===================== PANTALLA DE AUTENTICACIÓN (simulada) ===================== -->
 <div id="auth-screen">
   <div class="auth-logo">
-    <img class="brand-icon" src="icon-192.png" alt="WordTrack">
-    <img class="brand-wordmark" src="wordmark.png" alt="WordTrack">
+    <img class="brand-wordmark" src="wordmark.png" alt="Lexi">
   </div>
   <div class="auth-sub" data-i18n="auth_sub">Guarda tu vocabulario y practica cuando quieras</div>
 
@@ -333,7 +330,7 @@
 <div class="phone" id="app-content" style="display:none">
 
   <header class="topbar">
-    <h1 class="brand-row"><img class="brand-icon" src="icon-192.png" alt=""><img class="brand-wordmark" src="wordmark.png" alt="WordTrack"></h1>
+    <h1 class="brand-row"><img class="brand-wordmark" src="wordmark.png" alt="Lexi"></h1>
     <div class="right">
       <div class="badge">🔥 <span id="streak-badge">0</span> <span data-i18n="days_label">días</span></div>
       <button class="lang-toggle" id="lang-toggle" onclick="toggleLanguage()" title="Cambiar idioma / Change language">ES</button>
@@ -349,7 +346,7 @@
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="font-size:26px;">📲</div>
           <div style="flex:1;">
-            <div style="font-weight:700; font-size:14px;" data-i18n="install_title">Instala WordTrack en tu celular</div>
+            <div style="font-weight:700; font-size:14px;" data-i18n="install_title">Instala Lexi en tu celular</div>
             <div style="font-size:12px; color:var(--muted);" id="install-banner-text" data-i18n="install_banner_text">Úsala como una app, con ícono en tu pantalla de inicio.</div>
           </div>
         </div>
@@ -570,7 +567,7 @@
       <div style="font-weight:700; font-size:16px; margin-bottom:10px;" data-i18n="ios_title">Instalar en iPhone</div>
       <p style="font-size:14px; line-height:1.6; margin:0 0 8px;" data-i18n-html="ios_step1">1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.</p>
       <p style="font-size:14px; line-height:1.6; margin:0 0 8px;" data-i18n-html="ios_step2">2. Baja y elige <strong>"Agregar a inicio"</strong>.</p>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;" data-i18n="ios_step3">3. Listo — te quedará el ícono de WordTrack en tu pantalla.</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 16px;" data-i18n="ios_step3">3. Listo — te quedará el ícono de Lexi en tu pantalla.</p>
       <button class="btn secondary" onclick="document.getElementById('ios-install-modal').style.display='none'" data-i18n="btn_understood">Entendido</button>
     </div>
   </div>
@@ -635,7 +632,7 @@ function todayStr(){ return new Date().toISOString().slice(0,10); }
 const I18N = {
   es: {
     days_label: 'días', logout_title: 'Cerrar sesión', logout_label: 'Salir',
-    install_title: 'Instala WordTrack en tu celular',
+    install_title: 'Instala Lexi en tu celular',
     install_banner_text: 'Úsala como una app, con ícono en tu pantalla de inicio.',
     install_banner_ios_text: 'Toca "Instalar" y sigue los pasos para agregarla a tu pantalla de inicio.',
     btn_install: 'Instalar',
@@ -701,7 +698,7 @@ const I18N = {
     ios_title: 'Instalar en iPhone',
     ios_step1: '1. Toca el ícono de <strong>Compartir</strong> (□↑) en la barra de Safari.',
     ios_step2: '2. Baja y elige <strong>"Agregar a inicio"</strong>.',
-    ios_step3: '3. Listo — te quedará el ícono de WordTrack en tu pantalla.',
+    ios_step3: '3. Listo — te quedará el ícono de Lexi en tu pantalla.',
     btn_understood: 'Entendido',
     btn_translate_selection: '🔍 Traducir selección',
     searching: 'Buscando…', btn_save_vocab: '+ Guardar en mi vocabulario',
@@ -724,7 +721,7 @@ const I18N = {
   },
   en: {
     days_label: 'days', logout_title: 'Log out', logout_label: 'Log out',
-    install_title: 'Install WordTrack on your phone',
+    install_title: 'Install Lexi on your phone',
     install_banner_text: 'Use it like an app, with an icon on your home screen.',
     install_banner_ios_text: 'Tap "Install" and follow the steps to add it to your home screen.',
     btn_install: 'Install',
@@ -790,7 +787,7 @@ const I18N = {
     ios_title: 'Install on iPhone',
     ios_step1: '1. Tap the <strong>Share</strong> icon (□↑) in the Safari bar.',
     ios_step2: '2. Scroll down and choose <strong>"Add to Home Screen"</strong>.',
-    ios_step3: '3. Done — the WordTrack icon will appear on your screen.',
+    ios_step3: '3. Done — the Lexi icon will appear on your screen.',
     btn_understood: 'Got it',
     btn_translate_selection: '🔍 Translate selection',
     searching: 'Searching…', btn_save_vocab: '+ Save to my vocabulary',
