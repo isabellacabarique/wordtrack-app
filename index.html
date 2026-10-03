@@ -422,7 +422,16 @@
 
       <div class="card" id="own-example-card" style="display:none">
         <label class="field-label" data-i18n="label_own_example">Escribe tu propio ejemplo (en inglés)</label>
-        <textarea id="input-own-example" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here"></textarea>
+        <textarea id="input-own-example" placeholder="Escribe aquí..." data-i18n-ph="ph_write_here" oninput="document.getElementById('example-check-result').style.display='none'"></textarea>
+        <button type="button" class="btn secondary small" id="btn-check-example" style="margin-top:8px;" onclick="checkExampleClick()" data-i18n="btn_check_example">Revisar</button>
+        <div id="example-check-result" style="display:none; margin-top:12px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:4px;" id="example-result-label-original" data-i18n="example_result_original">Tu ejemplo</div>
+          <p id="example-result-original" style="font-size:14px; line-height:1.6; margin:0 0 10px;"></p>
+          <div id="example-result-corrected-wrap" style="display:none;">
+            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;" data-i18n="example_result_corrected">Versión corregida</div>
+            <p id="example-result-corrected" style="font-size:14px; line-height:1.6; margin:0;"></p>
+          </div>
+        </div>
       </div>
 
       <button class="btn" id="btn-guardar" style="display:none" onclick="saveWord()" data-i18n="btn_save">Guardar</button>
@@ -582,7 +591,6 @@
     </div>
   </div>
 
-
   <!-- Botón flotante: aparece cuando el estudiante selecciona/subraya una expresión en la historia -->
   <button id="translate-selection-btn" data-i18n="btn_translate_selection">🔍 Traducir selección</button>
 
@@ -648,6 +656,8 @@ const I18N = {
     label_translation: 'español', btn_listen: '🔊 Escuchar',
     section_examples: 'Ejemplos de uso', note_read_aloud: 'Recuerda leer los ejemplos en voz alta.',
     label_own_example: 'Escribe tu propio ejemplo (en inglés)', btn_save: 'Guardar',
+    btn_check_example: 'Revisar', checking_example: 'Revisando…', err_check_example: 'No se pudo revisar el ejemplo. Intenta de nuevo.',
+    example_result_original: 'Tu ejemplo', example_result_corrected: 'Versión corregida',
     note_unknown: 'No se pudo generar la traducción automáticamente. Puedes escribirla tú misma en el ejemplo de abajo y guardar igual.',
     note_not_english: 'Esto no parece ser una palabra o expresión válida en el idioma que estás aprendiendo.',
     note_invalid_word: 'No reconocemos esta palabra. Revisa cómo la escribiste (el spelling) e inténtalo de nuevo.',
@@ -737,6 +747,8 @@ const I18N = {
     label_translation: 'translation', btn_listen: '🔊 Listen',
     section_examples: 'Example sentences', note_read_aloud: 'Remember to read the examples out loud.',
     label_own_example: 'Write your own example (in English)', btn_save: 'Save',
+    btn_check_example: 'Check', checking_example: 'Checking…', err_check_example: "Couldn't check the example. Try again.",
+    example_result_original: 'Your example', example_result_corrected: 'Corrected version',
     note_unknown: "We couldn't generate the translation automatically. You can write it yourself in the example below and save anyway.",
     note_not_english: "This doesn't look like a valid word or expression in the language you're learning.",
     note_invalid_word: "We don't recognize this word. Check your spelling and try again.",
@@ -1059,6 +1071,7 @@ function onWordInput(){
   const btn = document.getElementById('btn-guardar');
   const note = document.getElementById('unknown-note');
 
+  document.getElementById('example-check-result').style.display = 'none';
   if(!raw){ tCard.style.display='none'; oCard.style.display='none'; btn.style.display='none'; note.style.display='none'; return; }
 
   document.getElementById('translation-text').textContent = t('searching_translation');
@@ -1131,6 +1144,67 @@ async function lookupWord(raw){
   document.getElementById('btn-guardar').style.display = 'block';
 }
 
+/* Botón "Revisar" junto al ejemplo propio: el estudiante puede pedirle a la
+   IA que revise su oración en cualquier momento, antes de guardar. Si está
+   bien, se muestra completa en verde. Si tiene errores, se marcan en rojo
+   las partes mal escritas y debajo aparece la oración corregida con las
+   partes arregladas en verde. Guardar la palabra NO depende de haber
+   revisado: se guarda tal cual lo que haya en el cuadro de texto. */
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Convierte un texto con partes marcadas así [[parte]] en HTML, coloreando
+// esas partes con el color indicado y escapando el resto para que sea seguro.
+function renderMarkedText(marked, color){
+  const parts = String(marked).split(/(\[\[[\s\S]*?\]\])/g);
+  return parts.map(p => {
+    const m = p.match(/^\[\[([\s\S]*)\]\]$/);
+    if(m) return `<span style="color:${color}; font-weight:700;">${escapeHtml(m[1])}</span>`;
+    return escapeHtml(p);
+  }).join('');
+}
+
+async function checkExampleClick(){
+  const example = document.getElementById('input-own-example').value.trim();
+  const resultBox = document.getElementById('example-check-result');
+  if(!example){ return; }
+  const raw = document.getElementById('input-en').value.trim().toLowerCase();
+  const useLookup = lastLookup.word === raw;
+  const es = useLookup ? lastLookup.es : '';
+  const wordLanguage = (useLookup && lastLookup.language) ? lastLookup.language : (getAccountLanguage() || 'en');
+
+  const btn = document.getElementById('btn-check-example');
+  btn.disabled = true;
+  btn.textContent = t('checking_example');
+
+  try{
+    const { data, error } = await sb.functions.invoke('check-own-example', {
+      body: { word: raw, es, example, language: wordLanguage }
+    });
+    if(error || !data || data.error) throw new Error('error');
+
+    const originalEl = document.getElementById('example-result-original');
+    const correctedWrap = document.getElementById('example-result-corrected-wrap');
+    const correctedEl = document.getElementById('example-result-corrected');
+
+    if(data.has_errors){
+      originalEl.innerHTML = renderMarkedText(data.original_marked || example, '#c0392b');
+      correctedEl.innerHTML = renderMarkedText(data.corrected_marked || data.corrected || example, '#2f9c5c');
+      correctedWrap.style.display = 'block';
+    } else {
+      originalEl.innerHTML = `<span style="color:#2f9c5c; font-weight:700;">${escapeHtml(example)}</span>`;
+      correctedWrap.style.display = 'none';
+    }
+    resultBox.style.display = 'block';
+  }catch(e){
+    alert(t('err_check_example'));
+  }
+
+  btn.disabled = false;
+  btn.textContent = t('btn_check_example');
+}
+
 async function saveWord(){
   const raw = document.getElementById('input-en').value.trim().toLowerCase();
   if(!raw || !currentUser) return;
@@ -1159,6 +1233,7 @@ async function saveWord(){
   document.getElementById('input-own-example').value='';
   document.getElementById('translation-card').style.display='none';
   document.getElementById('own-example-card').style.display='none';
+  document.getElementById('example-check-result').style.display='none';
   document.getElementById('btn-guardar').style.display='none';
   document.getElementById('unknown-note').style.display='none';
   lastLookup = { word: null, es: '', examples: [], type: '', phonetic: '', language: '' };
